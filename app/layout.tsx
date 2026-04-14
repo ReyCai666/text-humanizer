@@ -2,24 +2,37 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HumanizeAI — AI Text Humanizer & AI Detection Tool for Students",
+  title: "HumanizeAI — Free AI Detector & University-Grade Bypass Tool",
   description:
-    "Transform AI-generated text into natural, human-sounding writing. Check AI detection scores with sentence-level analysis. Free tool for students, content creators, and professionals.",
+    "Trusted by 10,000+ students. Detect AI content with sentence-level scoring, humanize AI text, and rewrite with tone/perspective controls. Bypass Turnitin AI detection. Free to try.",
   keywords: [
+    // 核心
     "AI text humanizer",
     "AI detector",
     "bypass AI detection",
-    "humanize AI text",
+    "humanize AI text free",
     "AI content detector",
+    // 学生高搜索量
+    "bypass Turnitin AI detection",
+    "Turnitin AI checker",
+    "GPTZero alternative",
     "student essay tool",
-    "academic writing",
+    "university AI detection",
+    "academic writing tool",
+    // 功能
     "AI detection score",
+    "sentence-level AI analysis",
     "remove AI detection",
     "AI to human text",
-    "GPTZero alternative",
-    "Turnitin bypass",
     "paraphrasing tool",
-    "AI writing checker",
+    "AI text rewriter",
+    "change tone of text",
+    "rewrite in formal tone",
+    // 长尾
+    "free AI humanizer no signup",
+    "how to make ChatGPT undetectable",
+    "AI detection remover online",
+    "essay checker before submit",
   ],
   authors: [{ name: "HumanizeAI" }],
   creator: "HumanizeAI",
@@ -36,9 +49,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "HumanizeAI — AI Text Humanizer & AI Detection Tool",
+    title: "HumanizeAI — Free AI Detector & University-Grade Bypass Tool",
     description:
-      "Transform AI text into natural writing and check AI detection scores. Free tool for students.",
+      "Trusted by 10,000+ students. Detect AI, humanize text, rewrite with tone controls. Bypass Turnitin. Free to try.",
     url: "https://text-humanizer-theta.vercel.app",
     siteName: "HumanizeAI",
     type: "website",
@@ -46,9 +59,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "HumanizeAI — AI Text Humanizer & Detector",
+    title: "HumanizeAI — Free AI Detector & Bypass Tool",
     description:
-      "Transform AI text into natural writing. Check AI detection scores with color-coded analysis.",
+      "Trusted by 10,000+ students. Detect AI content, humanize text, and rewrite with tone controls. Free to try.",
   },
   alternates: {
     canonical: "https://text-humanizer-theta.vercel.app",

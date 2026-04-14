@@ -70,14 +70,30 @@ function HomeContent() {
   const [loginError, setLoginError] = useState("");
 
   // Tab
-  const [tab, setTab] = useState<"humanize" | "detector">("detector");
+  const [tab, setTab] = useState<"humanize" | "detector" | "rewrite">("detector");
 
   // Handle tab from URL params
   useEffect(() => {
     const urlTab = searchParams.get("tab");
     if (urlTab === "humanize" || urlTab === "humanizer") setTab("humanize");
     else if (urlTab === "detector") setTab("detector");
+    else if (urlTab === "rewrite") setTab("rewrite");
   }, [searchParams]);
+
+  // Rewrite
+  const [rewriteMode, setRewriteMode] = useState<"tone" | "perspective" | "rephrase">("tone");
+  const [rewriteOption, setRewriteOption] = useState("formal");
+  const [rwInput, setRwInput] = useState("");
+  const [rwOutput, setRwOutput] = useState("");
+  const [rwLoading, setRwLoading] = useState(false);
+  const [rwCopied, setRwCopied] = useState(false);
+  const [rwUsage, setRwUsage] = useState(() => getUsage("th_rw"));
+
+  // Reset rewrite option when mode changes
+  useEffect(() => {
+    if (rewriteMode === "tone") setRewriteOption("formal");
+    else if (rewriteMode === "perspective") setRewriteOption("first_person");
+  }, [rewriteMode]);
 
   // Humanizer
   const [hInput, setHInput] = useState("");
@@ -109,8 +125,10 @@ function HomeContent() {
   const isPro = tier !== "free";
   const hLeft = isPro ? Infinity : FREE_HUMANIZE_LIMIT - hUsage;
   const dLeft = isPro ? Infinity : FREE_SCAN_LIMIT - dUsage;
+  const rwLeft = isPro ? Infinity : FREE_HUMANIZE_LIMIT - rwUsage;
   const canH = hLeft > 0;
   const canD = dLeft > 0;
+  const canRw = rwLeft > 0;
 
   // Clear messages
   useEffect(() => {
@@ -236,6 +254,28 @@ function HomeContent() {
       setError("Humanization failed.");
     }
     setHLoading(false);
+  }
+
+  // ─── Rewrite ──────────────────────────────────────────
+  async function handleRewrite() {
+    if (!rwInput.trim() || rwLoading || !canRw) return;
+    setRwLoading(true); setError(""); setRwOutput("");
+    try {
+      const res = await fetch("/api/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: rwInput, mode: rewriteMode, option: rewriteOption }),
+      });
+      const data = await res.json();
+      if (res.ok && data.result) {
+        setRwOutput(data.result);
+        addUsage("th_rw");
+        setRwUsage(getUsage("th_rw"));
+      } else {
+        setError(data.error || "Rewrite failed.");
+      }
+    } catch { setError("Rewrite failed."); }
+    setRwLoading(false);
   }
 
   // ─── Analyze ───────────────────────────────────────────
@@ -387,6 +427,14 @@ function HomeContent() {
               >
                 ✨ Humanizer
               </button>
+              <button
+                onClick={() => setTab("rewrite")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                  tab === "rewrite" ? "bg-violet-500/20 text-violet-300" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                📝 Rewrite
+              </button>
             </div>
 
             {/* Auth */}
@@ -455,13 +503,13 @@ function HomeContent() {
       {/* ─── Main Content ──────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* ─── Hero (only if no content yet) ────────────── */}
-        {!dResult && !hOutput && (
+        {!dResult && !hOutput && !rwOutput && (
           <div className="text-center mb-8 animate-fade-up">
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
               Detect AI. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Fix AI.</span> Pass checks.
             </h1>
             <p className="text-slate-400 text-sm max-w-lg mx-auto">
-              Paste text or upload a file. Get instant AI detection scores with sentence-level highlights and one-click rewriting.
+              Paste text or upload a file. Get instant AI detection scores with sentence-level highlights, one-click rewriting, and tone/perspective tools.
             </p>
           </div>
         )}
@@ -479,6 +527,12 @@ function HomeContent() {
             className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "humanize" ? "bg-emerald-500/20 text-emerald-300" : "text-slate-400"}`}
           >
             ✨ Humanizer
+          </button>
+          <button
+            onClick={() => setTab("rewrite")}
+            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "rewrite" ? "bg-violet-500/20 text-violet-300" : "text-slate-400"}`}
+          >
+            📝 Rewrite
           </button>
         </div>
 
@@ -746,15 +800,147 @@ function HomeContent() {
         )}
 
         {/* ═══════════════════════════════════════════════ */}
+        {/* REWRITE TAB                                     */}
+        {/* ═══════════════════════════════════════════════ */}
+        {tab === "rewrite" && (
+          <div className="animate-fade-up">
+            {/* Mode selector */}
+            <div className="flex justify-center mb-4">
+              <div className="inline-flex rounded-lg bg-white/5 p-0.5 border border-white/10">
+                {(["tone", "perspective", "rephrase"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setRewriteMode(m)}
+                    className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                      rewriteMode === m ? "bg-violet-500/20 text-violet-300" : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {m === "tone" ? "🎭 Tone" : m === "perspective" ? "👁 Perspective" : "🔄 Rephrase"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Option chips */}
+            {rewriteMode === "tone" && (
+              <div className="flex flex-wrap justify-center gap-2 mb-4">
+                {[
+                  { v: "formal", l: "Formal", ic: "🎓" },
+                  { v: "informal", l: "Informal", ic: "💬" },
+                  { v: "persuasive", l: "Persuasive", ic: "🔥" },
+                  { v: "analytical", l: "Analytical", ic: "📊" },
+                  { v: "descriptive", l: "Descriptive", ic: "🎨" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    onClick={() => setRewriteOption(o.v)}
+                    className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
+                      rewriteOption === o.v
+                        ? "bg-violet-500/20 text-violet-300 border border-violet-500/40"
+                        : "bg-white/[0.02] text-slate-400 border border-white/5 hover:text-white hover:border-white/10"
+                    }`}
+                  >
+                    {o.ic} {o.l}
+                  </button>
+                ))}
+              </div>
+            )}
+            {rewriteMode === "perspective" && (
+              <div className="flex justify-center gap-2 mb-4">
+                {[
+                  { v: "first_person", l: "First Person", ic: "👤", desc: "I, we, my" },
+                  { v: "third_person", l: "Third Person", ic: "👥", desc: "he, she, they" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    onClick={() => setRewriteOption(o.v)}
+                    className={`px-4 py-2 rounded-lg text-xs transition-all ${
+                      rewriteOption === o.v
+                        ? "bg-violet-500/20 text-violet-300 border border-violet-500/40"
+                        : "bg-white/[0.02] text-slate-400 border border-white/5 hover:text-white hover:border-white/10"
+                    }`}
+                  >
+                    {o.ic} {o.l} <span className="text-slate-600 ml-1">{o.desc}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Editor */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 focus-within:border-violet-500/30">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Original Text</span>
+                </div>
+                <textarea
+                  value={rwInput}
+                  onChange={(e) => setRwInput(e.target.value)}
+                  placeholder="Paste text to rewrite..."
+                  className="w-full h-64 sm:h-80 bg-transparent p-5 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none"
+                />
+                <div className="flex items-center justify-between px-5 py-3 border-t border-white/5">
+                  <span className="text-xs text-slate-600">{rwInput.length.toLocaleString()} chars</span>
+                  <button
+                    onClick={handleRewrite}
+                    disabled={!rwInput.trim() || rwLoading || !canRw}
+                    className="px-5 py-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-400 hover:to-purple-400 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-[0_0_20px_rgba(139,92,246,0.2)]"
+                  >
+                    {rwLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Rewriting...
+                      </span>
+                    ) : "📝 Rewrite"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Rewritten</span>
+                  {rwOutput && (
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(rwOutput); setRwCopied(true); setTimeout(() => setRwCopied(false), 2000); }}
+                      className="text-xs text-slate-500 hover:text-white transition-colors"
+                    >
+                      {rwCopied ? "✓ Copied" : "📋 Copy"}
+                    </button>
+                  )}
+                </div>
+                <div className="h-64 sm:h-80 p-5 overflow-y-auto">
+                  {rwOutput ? (
+                    <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">{rwOutput}</p>
+                  ) : (
+                    <p className="text-sm text-slate-600 italic">Rewritten result will appear here...</p>
+                  )}
+                </div>
+                {rwOutput && (
+                  <div className="px-5 py-3 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-xs text-slate-600">{rwOutput.length.toLocaleString()} chars</span>
+                    <button
+                      onClick={() => { setDInput(rwOutput); setTab("detector"); setDResult(null); }}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
+                    >
+                      🔍 Verify AI score
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            {!isPro && <p className="text-center text-xs text-slate-600 mt-3">{rwLeft} free rewrites remaining today</p>}
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════ */}
         {/* FEATURES                                        */}
         {/* ═══════════════════════════════════════════════ */}
-        {!dResult && !hOutput && (
+        {!dResult && !hOutput && !rwOutput && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10 max-w-3xl mx-auto">
             {[
               { icon: "🎯", title: "AI Detection", desc: "Sentence-level scoring" },
               { icon: "✨", title: "One-Click Fix", desc: "Rewrite flagged text" },
+              { icon: "📝", title: "Rewrite", desc: "Tone, perspective & more" },
               { icon: "📎", title: "File Upload", desc: "PDF, Word, TXT" },
-              { icon: "🔄", title: "Verify", desc: "Re-check after fix" },
             ].map((f, i) => (
               <div key={i} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center hover:border-white/10 transition-all duration-300 hover:translate-y-[-2px]">
                 <div className="text-xl mb-1">{f.icon}</div>
