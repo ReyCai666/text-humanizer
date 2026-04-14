@@ -1,52 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db";
-import { getFingerprint, getToday } from "@/lib/fingerprint";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-const FREE_DAILY_LIMIT = 3;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
-const SYSTEM_PROMPT = `You are a text humanization expert. Your job is to rewrite AI-generated text so it sounds like a real human wrote it.
+const SYSTEM_PROMPT = `Text humanization expert. Rewrite AI-generated text to sound naturally human.
 
 RULES:
-1. Keep the original meaning and key information intact
-2. Add natural human touches: occasional contractions, varied sentence lengths, informal connectors
-3. Remove robotic patterns: overly structured lists, formulaic transitions ("Furthermore," "In conclusion"), excessive hedging
-4. Add subtle personality: mild opinions, natural word choices, conversational flow
-5. Break up uniform sentence structures — mix short punchy sentences with longer flowing ones
-6. Remove filler phrases like "It's worth noting that" or "It is important to highlight"
-7. Keep the same language as the input
-8. Output ONLY the rewritten text, no explanations
-
-The goal is text that passes as human-written while preserving all original meaning.`;
-
-async function checkAndIncrementUsage(fingerprint: string): Promise<{ allowed: boolean; remaining: number }> {
-  const today = getToday();
-
-  // 用 UPSERT 原子操作：查询 + 插入/更新一步完成
-  await db.execute({
-    sql: `INSERT INTO anonymous_usage (fingerprint, date, use_count)
-          VALUES (?, ?, 1)
-          ON CONFLICT(fingerprint, date) DO UPDATE SET use_count = use_count + 1`,
-    args: [fingerprint, today],
-  });
-
-  // 查询当前用量
-  const result = await db.execute({
-    sql: "SELECT use_count FROM anonymous_usage WHERE fingerprint = ? AND date = ?",
-    args: [fingerprint, today],
-  });
-
-  const used = result.rows[0]?.use_count as number || 0;
-  return {
-    allowed: used <= FREE_DAILY_LIMIT,
-    remaining: Math.max(0, FREE_DAILY_LIMIT - used),
-  };
-}
+1. Keep original meaning and key info
+2. Add natural touches: contractions, varied lengths, informal connectors
+3. Remove robotic patterns: formulaic transitions, excessive hedging
+4. Add personality: natural word choices, conversational flow
+5. Mix short punchy sentences with longer ones
+6. Same language as input
+7. ONLY output rewritten text, no explanations`;
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, fingerprint: clientFp } = await req.json();
+    const { text } = await req.json();
 
     if (!text || typeof text !== "string") {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -54,17 +24,6 @@ export async function POST(req: NextRequest) {
 
     if (text.length > 5000) {
       return NextResponse.json({ error: "Text must be under 5000 characters" }, { status: 400 });
-    }
-
-    // 服务端用量检查（用 IP + 浏览器指纹，清缓存无效）
-    const fingerprint = getFingerprint(req, clientFp);
-    const { allowed, remaining } = await checkAndIncrementUsage(fingerprint);
-
-    if (!allowed) {
-      return NextResponse.json(
-        { error: "Daily free limit reached. Upgrade for unlimited access.", remaining: 0 },
-        { status: 429 }
-      );
     }
 
     if (!GEMINI_API_KEY) {
@@ -82,7 +41,7 @@ export async function POST(req: NextRequest) {
               role: "user",
               parts: [
                 { text: SYSTEM_PROMPT },
-                { text: `\n\nRewrite this text to sound human:\n\n${text}` },
+                { text: `\n\nRewrite to sound human:\n\n${text}` },
               ],
             },
           ],
@@ -106,10 +65,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to process text" }, { status: 500 });
     }
 
-    return NextResponse.json({
-      humanized: humanized.trim(),
-      remaining: remaining - 1, // 已经 +1 了，所以 -1
-    });
+    return NextResponse.json({ humanized: humanized.trim() });
   } catch (err) {
     console.error("Humanize error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

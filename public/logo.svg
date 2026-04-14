@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0.1"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded square -->
+  <rect x="48" y="48" width="416" height="416" rx="96" fill="#0f1a1a"/>
+  <!-- Outer ring -->
+  <rect x="48" y="48" width="416" height="416" rx="96" stroke="url(#grad)" stroke-width="4" fill="none"/>
+  <!-- Inner glow accent -->
+  <rect x="72" y="72" width="368" height="368" rx="72" fill="url(#grad2)"/>
+  <!-- Letter H - main mark -->
+  <path d="M176 160 L176 352 L216 352 L216 280 L296 280 L296 352 L336 352 L336 160 L296 160 L296 240 L216 240 L216 160 Z" fill="url(#grad)"/>
+  <!-- Scan line accent (detection indicator) -->
+  <rect x="160" y="256" width="192" height="3" rx="1.5" fill="#10b981" opacity="0.6"/>
+  <!-- Small dot accents -->
+  <circle cx="160" cy="176" r="6" fill="#10b981" opacity="0.4"/>
+  <circle cx="352" cy="336" r="6" fill="#06b6d4" opacity="0.4"/>
+</svg>
