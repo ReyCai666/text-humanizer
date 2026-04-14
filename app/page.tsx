@@ -11,51 +11,108 @@ const FREE_HUMANIZE_LIMIT = 3;
 const FREE_SCAN_LIMIT = 3;
 
 // ─── Paragraph Highlight Component ─────────────────────
-function ParagraphHighlight({ text, sentences }: { text: string; sentences: { text: string; ai_probability: number; highlight: "none" | "yellow" | "red" }[] }) {
-  // Split original text into paragraphs
-  const paragraphs = text.split(/\n\n+/);
-  // Build a flat list of all sentences from paragraphs for matching
+function ParagraphHighlight({
+  text,
+  sentences,
+  blocks,
+  selectedBlock,
+  onSelectBlock,
+}: {
+  text: string;
+  sentences: { text: string; ai_probability: number; highlight: "none" | "yellow" | "red" }[];
+  blocks?: ContentBlock[] | null;
+  selectedBlock?: number | null;
+  onSelectBlock?: (idx: number | null) => void;
+}) {
+  // Use blocks if available, otherwise fall back to plain text paragraphs
+  const contentBlocks: ContentBlock[] = blocks || text.split(/\n\n+/).filter(p => p.trim()).map(p => ({ type: "paragraph" as const, text: p.trim() }));
+
+  // Map sentences to blocks by character accumulation
   let sentIdx = 0;
 
   return (
-    <div className="space-y-4">
-      {paragraphs.map((para, pi) => {
-        // Find which analyzed sentences belong to this paragraph
-        // by accumulating character counts
-        const paraSentences: { text: string; highlight: string; ai_probability: number }[] = [];
+    <div className="space-y-3">
+      {contentBlocks.map((block, bi) => {
+        // Accumulate sentences for this block
+        const blockSentences: typeof sentences = [];
         let charsConsumed = 0;
+        const blockLen = block.text.length;
 
-        while (sentIdx < sentences.length && charsConsumed < para.length) {
+        while (sentIdx < sentences.length && charsConsumed < blockLen) {
           const s = sentences[sentIdx];
-          paraSentences.push(s);
-          charsConsumed += s.text.length + 1; // +1 for space/separator
+          blockSentences.push(s);
+          charsConsumed += s.text.length + 1;
           sentIdx++;
         }
 
+        // Determine worst highlight in this block
+        const worstHighlight = blockSentences.reduce((worst, s) => {
+          if (s.highlight === "red") return "red";
+          if (s.highlight === "yellow" && worst !== "red") return "yellow";
+          return worst;
+        }, "none" as string);
+
+        const isSelected = selectedBlock === bi;
+        const isClickable = worstHighlight !== "none";
+
+        // Style based on block type
+        const typeStyle =
+          block.type === "heading1" ? "text-lg font-bold text-white mb-2" :
+          block.type === "heading2" ? "text-base font-semibold text-slate-200 mb-1" :
+          block.type === "heading3" ? "text-sm font-semibold text-slate-300 mb-1" :
+          "text-sm text-slate-300 leading-[1.8]";
+
+        // Highlight border
+        const borderStyle =
+          worstHighlight === "red" ? "border-l-2 border-l-red-500/60" :
+          worstHighlight === "yellow" ? "border-l-2 border-l-yellow-500/50" :
+          "";
+
         return (
-          <div key={pi} className="mb-4 last:mb-0">
-            {paraSentences.length > 0 ? (
-              <p className="text-sm leading-[1.8]">
-                {paraSentences.map((s, si) => {
-                  const bg = s.highlight === "red"
-                    ? "bg-red-500/15 border-b-2 border-red-500/40"
-                    : s.highlight === "yellow"
-                    ? "bg-yellow-500/10 border-b-2 border-yellow-500/30"
-                    : "";
-                  return (
-                    <span
-                      key={si}
-                      className={`${bg} text-slate-300 transition-colors duration-300`}
-                      title={s.highlight !== "none" ? `AI: ${s.ai_probability}%` : undefined}
-                    >
-                      {s.text}{" "}
-                    </span>
-                  );
-                })}
-              </p>
+          <div
+            key={bi}
+            onClick={() => isClickable && onSelectBlock?.(isSelected ? null : bi)}
+            className={`pl-4 py-1 transition-all duration-200 ${borderStyle} ${
+              isClickable ? "cursor-pointer hover:bg-white/[0.03] rounded-r-lg" : ""
+            } ${isSelected ? "bg-white/[0.05] ring-1 ring-white/10 rounded-r-lg" : ""}`}
+          >
+            {/* Render heading or paragraph */}
+            {block.type !== "paragraph" ? (
+              <div className={typeStyle}>{block.text}</div>
             ) : (
-              // Paragraph had no analyzed sentences (e.g., too short)
-              <p className="text-sm text-slate-500 leading-[1.8] whitespace-pre-wrap">{para}</p>
+              <p className={typeStyle}>
+                {blockSentences.length > 0 ? (
+                  blockSentences.map((s, si) => {
+                    const bg = s.highlight === "red"
+                      ? "bg-red-500/15"
+                      : s.highlight === "yellow"
+                      ? "bg-yellow-500/10"
+                      : "";
+                    return (
+                      <span key={si} className={`${bg} rounded px-0.5 transition-colors`}>
+                        {s.text}{" "}
+                      </span>
+                    );
+                  })
+                ) : (
+                  block.text
+                )}
+              </p>
+            )}
+            {/* Show score on hover for flagged blocks */}
+            {isClickable && isSelected && (
+              <div className="mt-1 text-[10px] text-slate-500">
+                {blockSentences.filter(s => s.highlight === "red").length > 0 && (
+                  <span className="text-red-400 mr-3">
+                    {blockSentences.filter(s => s.highlight === "red").length} AI sentences
+                  </span>
+                )}
+                {blockSentences.filter(s => s.highlight === "yellow").length > 0 && (
+                  <span className="text-yellow-400">
+                    {blockSentences.filter(s => s.highlight === "yellow").length} suspicious
+                  </span>
+                )}
+              </div>
             )}
           </div>
         );
@@ -110,6 +167,10 @@ interface AnalysisResult {
   sentences: Sentence[];
   indicators: string[];
 }
+interface ContentBlock {
+  type: "heading1" | "heading2" | "heading3" | "paragraph";
+  text: string;
+}
 
 // ─── Main Component ────────────────────────────────────────
 function HomeContent() {
@@ -161,6 +222,8 @@ function HomeContent() {
   const [dResult, setDResult] = useState<AnalysisResult | null>(null);
   const [dLoading, setDLoading] = useState(false);
   const [dUsage, setDUsage] = useState(() => getUsage("th_d"));
+  const [contentBlocks, setContentBlocks] = useState<ContentBlock[] | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
 
   // Rewrite
   const [rewriting, setRewriting] = useState<number | null>(null);
@@ -259,6 +322,13 @@ function HomeContent() {
       const t = await file.text();
       setDInput(t);
       setHInput(t);
+      // Parse plain text into blocks
+      const blocks: ContentBlock[] = t.split(/\n\n+/).filter(p => p.trim()).map(para => {
+        const trimmed = para.trim();
+        if (trimmed.length < 60 && trimmed === trimmed.toUpperCase()) return { type: "heading1" as const, text: trimmed };
+        return { type: "paragraph" as const, text: trimmed };
+      });
+      setContentBlocks(blocks.length > 0 ? blocks : [{ type: "paragraph", text: t }]);
       return;
     }
     if (ext === ".pdf") {
@@ -271,7 +341,11 @@ function HomeContent() {
     try {
       const res = await fetch("/api/extract-text", { method: "POST", body: fd });
       const data = await res.json();
-      if (data.text) { setDInput(data.text); setHInput(data.text); }
+      if (data.text) {
+        setDInput(data.text);
+        setHInput(data.text);
+        setContentBlocks(data.blocks || [{ type: "paragraph", text: data.text }]);
+      }
       else setError(data.error || "Failed to extract text");
     } catch { setError("Failed to process file"); }
   }
@@ -643,27 +717,38 @@ function HomeContent() {
               <div className="animate-fade-up">
                 {/* Side-by-side document view */}
                 <div className="grid lg:grid-cols-2 gap-4">
-                  {/* LEFT: Original text with paragraph formatting */}
+                  {/* LEFT: Original text with formatting */}
                   <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
                     <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
                       <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Original Document</span>
                       <button
-                        onClick={() => { setDResult(null); setDInput(""); }}
+                        onClick={() => { setDResult(null); setDInput(""); setContentBlocks(null); setSelectedBlock(null); }}
                         className="text-xs text-slate-500 hover:text-white transition-colors"
                       >
                         ← New scan
                       </button>
                     </div>
                     <div className="p-6 max-h-[70vh] overflow-y-auto">
-                      {dInput.split(/\n\n+/).map((para, i) => (
-                        <p key={i} className="text-sm text-slate-300 leading-[1.8] mb-4 last:mb-0 whitespace-pre-wrap">
-                          {para}
-                        </p>
-                      ))}
+                      {contentBlocks ? (
+                        // Render with formatting
+                        contentBlocks.map((block, i) => {
+                          const style =
+                            block.type === "heading1" ? "text-lg font-bold text-white mb-2 mt-4 first:mt-0" :
+                            block.type === "heading2" ? "text-base font-semibold text-slate-200 mb-1 mt-3" :
+                            block.type === "heading3" ? "text-sm font-semibold text-slate-300 mb-1 mt-2" :
+                            "text-sm text-slate-300 leading-[1.8] mb-3";
+                          return <div key={i} className={style}>{block.text}</div>;
+                        })
+                      ) : (
+                        // Fallback: plain text with paragraph breaks
+                        dInput.split(/\n\n+/).map((para, i) => (
+                          <p key={i} className="text-sm text-slate-300 leading-[1.8] mb-4 last:mb-0 whitespace-pre-wrap">{para}</p>
+                        ))
+                      )}
                     </div>
                   </div>
 
-                  {/* RIGHT: Analysis result with highlights OR loading */}
+                  {/* RIGHT: Analysis with highlights */}
                   <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
                     <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
                       <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">AI Analysis</span>
@@ -676,14 +761,11 @@ function HomeContent() {
                     </div>
                     <div className="p-6 max-h-[70vh] overflow-y-auto">
                       {dLoading ? (
-                        /* Processing animation */
                         <div className="space-y-4">
-                          {dInput.split(/\n\n+/).map((para, i) => (
+                          {(contentBlocks || dInput.split(/\n\n+/).map(t => ({ type: "paragraph" as const, text: t }))).map((_, i) => (
                             <div key={i} className="animate-pulse">
                               <div className="h-4 bg-slate-800 rounded w-full mb-2" style={{ animationDelay: `${i * 100}ms` }} />
-                              {para.length > 80 && (
-                                <div className="h-4 bg-slate-800 rounded w-3/4" style={{ animationDelay: `${i * 100 + 50}ms` }} />
-                              )}
+                              <div className="h-4 bg-slate-800 rounded w-3/4" style={{ animationDelay: `${i * 100 + 50}ms` }} />
                             </div>
                           ))}
                           <div className="flex items-center justify-center gap-2 pt-4 text-xs text-slate-500">
@@ -692,8 +774,13 @@ function HomeContent() {
                           </div>
                         </div>
                       ) : (
-                        /* Highlighted results with paragraph structure */
-                        <ParagraphHighlight text={dInput} sentences={dResult.sentences} />
+                        <ParagraphHighlight
+                          text={dInput}
+                          sentences={dResult.sentences}
+                          blocks={contentBlocks}
+                          selectedBlock={selectedBlock}
+                          onSelectBlock={setSelectedBlock}
+                        />
                       )}
                     </div>
                   </div>
