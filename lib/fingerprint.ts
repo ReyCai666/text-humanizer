@@ -8,8 +8,8 @@ import { createHash } from "crypto";
 export function getFingerprint(req: NextRequest, clientFingerprint?: string): string {
   // 获取 IP（兼容 Vercel/Cloudflare）
   const forwarded = req.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() || 
-             req.headers.get("x-real-ip") || 
+  const ip = forwarded?.split(",")[0]?.trim() ||
+             req.headers.get("x-real-ip") ||
              "unknown";
 
   // 组合 IP + 客户端指纹（如果有）
