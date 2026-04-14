@@ -10,6 +10,60 @@ const PdfPreview = dynamic(() => import("@/components/PdfPreview"), { ssr: false
 const FREE_HUMANIZE_LIMIT = 3;
 const FREE_SCAN_LIMIT = 3;
 
+// ─── Paragraph Highlight Component ─────────────────────
+function ParagraphHighlight({ text, sentences }: { text: string; sentences: { text: string; ai_probability: number; highlight: "none" | "yellow" | "red" }[] }) {
+  // Split original text into paragraphs
+  const paragraphs = text.split(/\n\n+/);
+  // Build a flat list of all sentences from paragraphs for matching
+  let sentIdx = 0;
+
+  return (
+    <div className="space-y-4">
+      {paragraphs.map((para, pi) => {
+        // Find which analyzed sentences belong to this paragraph
+        // by accumulating character counts
+        const paraSentences: { text: string; highlight: string; ai_probability: number }[] = [];
+        let charsConsumed = 0;
+
+        while (sentIdx < sentences.length && charsConsumed < para.length) {
+          const s = sentences[sentIdx];
+          paraSentences.push(s);
+          charsConsumed += s.text.length + 1; // +1 for space/separator
+          sentIdx++;
+        }
+
+        return (
+          <div key={pi} className="mb-4 last:mb-0">
+            {paraSentences.length > 0 ? (
+              <p className="text-sm leading-[1.8]">
+                {paraSentences.map((s, si) => {
+                  const bg = s.highlight === "red"
+                    ? "bg-red-500/15 border-b-2 border-red-500/40"
+                    : s.highlight === "yellow"
+                    ? "bg-yellow-500/10 border-b-2 border-yellow-500/30"
+                    : "";
+                  return (
+                    <span
+                      key={si}
+                      className={`${bg} text-slate-300 transition-colors duration-300`}
+                      title={s.highlight !== "none" ? `AI: ${s.ai_probability}%` : undefined}
+                    >
+                      {s.text}{" "}
+                    </span>
+                  );
+                })}
+              </p>
+            ) : (
+              // Paragraph had no analyzed sentences (e.g., too short)
+              <p className="text-sm text-slate-500 leading-[1.8] whitespace-pre-wrap">{para}</p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const TIER_LIMITS: Record<string, { humanize: number; scan: number; words: number }> = {
   free: { humanize: 3, scan: 3, words: 5000 },
   basic: { humanize: 30, scan: 10, words: 5000 },
@@ -586,139 +640,137 @@ function HomeContent() {
 
             {/* Results (split layout) */}
             {dResult && (
-              <div className="grid lg:grid-cols-2 gap-4 animate-fade-up">
-                {/* LEFT: Original text with highlights */}
-                <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
-                  <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
-                    <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Original Text</span>
-                    <button
-                      onClick={() => { setDResult(null); }}
-                      className="text-xs text-slate-500 hover:text-white transition-colors"
-                    >
-                      ← New scan
-                    </button>
+              <div className="animate-fade-up">
+                {/* Side-by-side document view */}
+                <div className="grid lg:grid-cols-2 gap-4">
+                  {/* LEFT: Original text with paragraph formatting */}
+                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                      <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Original Document</span>
+                      <button
+                        onClick={() => { setDResult(null); setDInput(""); }}
+                        className="text-xs text-slate-500 hover:text-white transition-colors"
+                      >
+                        ← New scan
+                      </button>
+                    </div>
+                    <div className="p-6 max-h-[70vh] overflow-y-auto">
+                      {dInput.split(/\n\n+/).map((para, i) => (
+                        <p key={i} className="text-sm text-slate-300 leading-[1.8] mb-4 last:mb-0 whitespace-pre-wrap">
+                          {para}
+                        </p>
+                      ))}
+                    </div>
                   </div>
-                  <div className="p-5 max-h-[60vh] overflow-y-auto space-y-3">
-                    {dResult.sentences.map((s, i) => {
-                      const bg = s.highlight === "red" ? "bg-red-500/10 border-red-500/30" :
-                                 s.highlight === "yellow" ? "bg-yellow-500/10 border-yellow-500/30" :
-                                 "border-transparent";
-                      return (
-                        <div
-                          key={i}
-                          className={`group relative p-3 rounded-xl border transition-all duration-300 ${bg} hover:bg-white/5`}
-                        >
-                          <p className="text-sm text-slate-300 leading-relaxed pr-16">{s.text}</p>
-                          <div className="absolute top-3 right-3 flex items-center gap-2">
-                            <span className={`text-xs font-mono ${s.highlight === "red" ? "text-red-400" : s.highlight === "yellow" ? "text-yellow-400" : "text-slate-600"}`}>
-                              {s.ai_probability}%
-                            </span>
-                            {s.highlight !== "none" && (
-                              <button
-                                onClick={() => handleRewriteSentence(i)}
-                                disabled={rewriting !== null}
-                                className="opacity-0 group-hover:opacity-100 text-xs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition-all disabled:opacity-50"
-                              >
-                                {rewriting === i ? "..." : "Rewrite"}
-                              </button>
-                            )}
+
+                  {/* RIGHT: Analysis result with highlights OR loading */}
+                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                      <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">AI Analysis</span>
+                      {dLoading && (
+                        <span className="flex items-center gap-2 text-xs text-amber-400">
+                          <span className="w-3 h-3 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+                          Analyzing...
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-6 max-h-[70vh] overflow-y-auto">
+                      {dLoading ? (
+                        /* Processing animation */
+                        <div className="space-y-4">
+                          {dInput.split(/\n\n+/).map((para, i) => (
+                            <div key={i} className="animate-pulse">
+                              <div className="h-4 bg-slate-800 rounded w-full mb-2" style={{ animationDelay: `${i * 100}ms` }} />
+                              {para.length > 80 && (
+                                <div className="h-4 bg-slate-800 rounded w-3/4" style={{ animationDelay: `${i * 100 + 50}ms` }} />
+                              )}
+                            </div>
+                          ))}
+                          <div className="flex items-center justify-center gap-2 pt-4 text-xs text-slate-500">
+                            <span className="w-3.5 h-3.5 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                            Scanning for AI patterns...
                           </div>
                         </div>
-                      );
-                    })}
+                      ) : (
+                        /* Highlighted results with paragraph structure */
+                        <ParagraphHighlight text={dInput} sentences={dResult.sentences} />
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* RIGHT: Score + Actions */}
-                <div className="space-y-4">
-                  {/* Score Cards */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 text-center">
-                      <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">AI Score</div>
-                      <div className={`text-4xl font-bold ${scoreColor(dResult.overall_score)} transition-colors duration-500`}>
-                        {dResult.overall_score}%
-                      </div>
-                      <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full bg-gradient-to-r ${scoreBg(dResult.overall_score)} rounded-full transition-all duration-1000`}
-                          style={{ width: `${dResult.overall_score}%` }}
-                        />
-                      </div>
-                      <div className={`text-xs mt-2 ${scoreColor(dResult.overall_score)}`}>{scoreLabel(dResult.overall_score)}</div>
+                {/* Score & Analysis Section (below the document view) */}
+                <div className="mt-6 grid lg:grid-cols-3 gap-4">
+                  {/* AI Score Card */}
+                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 text-center">
+                    <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">AI Score</div>
+                    <div className={`text-5xl font-bold ${scoreColor(dResult.overall_score)} transition-colors duration-500`}>
+                      {dResult.overall_score}%
                     </div>
-                    <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 text-center">
-                      <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Human Score</div>
-                      <div className="text-4xl font-bold text-emerald-400">
-                        {dResult.human_score}%
-                      </div>
-                      <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full transition-all duration-1000"
-                          style={{ width: `${dResult.human_score}%` }}
-                        />
-                      </div>
-                      <div className="text-xs mt-2 text-emerald-400">
-                        {dResult.sentences.filter(s => s.highlight === "none").length}/{dResult.sentences.length} clean
-                      </div>
+                    <div className="mt-3 h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-gradient-to-r ${scoreBg(dResult.overall_score)} rounded-full transition-all duration-1000`}
+                        style={{ width: `${dResult.overall_score}%` }}
+                      />
+                    </div>
+                    <div className={`text-sm mt-2 font-medium ${scoreColor(dResult.overall_score)}`}>{scoreLabel(dResult.overall_score)}</div>
+                    <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-slate-500">
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-500/50" /> {dResult.sentences.filter(s => s.highlight === "red").length} flagged</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-yellow-500/50" /> {dResult.sentences.filter(s => s.highlight === "yellow").length} suspicious</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-emerald-500/50" /> {dResult.sentences.filter(s => s.highlight === "none").length} clean</span>
                     </div>
                   </div>
 
-                  {/* Summary */}
-                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-4">
-                    <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Analysis</div>
-                    <p className="text-sm text-slate-300">{dResult.summary}</p>
-                  </div>
-
-                  {/* Indicators */}
-                  {dResult.indicators.length > 0 && (
-                    <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4">
-                      <div className="text-[10px] uppercase tracking-widest text-red-400/60 mb-2">AI Patterns</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {dResult.indicators.map((ind, i) => (
-                          <span key={i} className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
-                            {ind}
-                          </span>
-                        ))}
+                  {/* Analysis Summary */}
+                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                    <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Analysis</div>
+                    <p className="text-sm text-slate-300 leading-relaxed">{dResult.summary}</p>
+                    {dResult.indicators.length > 0 && (
+                      <div className="mt-4">
+                        <div className="text-[10px] uppercase tracking-widest text-red-400/60 mb-2">Detected AI Patterns</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {dResult.indicators.map((ind, i) => (
+                            <span key={i} className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
+                              {ind}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Legend */}
-                  <div className="flex items-center gap-4 text-[10px] text-slate-500">
-                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-red-500/30 border border-red-500/50" /> Likely AI (70%+)</span>
-                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-yellow-500/30 border border-yellow-500/50" /> Suspicious (30-69%)</span>
-                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-slate-700" /> Clean (&lt;30%)</span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-2">
-                    {dResult.sentences.some(s => s.highlight !== "none") && (
-                      <button
-                        onClick={handleRewriteAll}
-                        disabled={rewriting !== null}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 disabled:opacity-50 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-                      >
-                        {rewriting !== null ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Rewriting...
-                          </span>
-                        ) : `✨ Rewrite ${dResult.sentences.filter(s => s.highlight !== "none").length} flagged sentences`}
-                      </button>
                     )}
-                    <button
-                      onClick={handleReverify}
-                      disabled={reverifyLoading}
-                      className="px-4 py-3 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-sm transition-all disabled:opacity-50"
-                    >
-                      {reverifyLoading ? (
-                        <span className="flex items-center gap-2">
-                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Re-scanning...
-                        </span>
-                      ) : "🔄 Re-verify score"}
-                    </button>
                   </div>
+
+                  {/* Suggestions */}
+                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                    <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Suggestions</div>
+                    {dResult.overall_score >= 70 ? (
+                      <div className="space-y-2 text-sm text-slate-400">
+                        <p>• Vary sentence length — mix short and long sentences naturally</p>
+                        <p>• Add personal anecdotes or specific examples</p>
+                        <p>• Remove formulaic transitions like "Furthermore" or "In conclusion"</p>
+                        <p>• Use contractions and informal connectors</p>
+                        <p className="text-slate-500 text-xs mt-3">Use the <span className="text-emerald-400">Humanizer</span> or <span className="text-violet-400">Rewrite</span> tabs to fix flagged text.</p>
+                      </div>
+                    ) : dResult.overall_score >= 30 ? (
+                      <div className="space-y-2 text-sm text-slate-400">
+                        <p>• Some sections show AI patterns — check yellow-highlighted areas</p>
+                        <p>• Consider adding more specific details or unique phrasing</p>
+                        <p>• Read aloud to check for natural flow</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 text-sm text-slate-400">
+                        <p>• Text appears naturally written ✓</p>
+                        <p>• No significant AI patterns detected</p>
+                        <p>• Good variety in sentence structure</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-6 mt-4 text-[10px] text-slate-500">
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500/30 border border-red-500/50" /> Likely AI (70%+)</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-yellow-500/30 border border-yellow-500/50" /> Suspicious (30-69%)</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-slate-700" /> Clean (&lt;30%)</span>
                 </div>
               </div>
             )}
