@@ -6,24 +6,23 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 const FREE_DAILY_LIMIT = 3;
 
-const SYSTEM_PROMPT = `You are a text humanization expert. Your job is to rewrite AI-generated text so it sounds like a real human wrote it.
+// Tone presets with academic-focused options
+const TONE_PROMPTS: Record<string, string> = {
+  formal: "Rewrite this text in a formal, professional tone. Use precise vocabulary, avoid contractions, and maintain academic rigor.",
+  informal: "Rewrite this text in a casual, conversational tone. Use contractions, simple vocabulary, and a friendly voice.",
+  persuasive: "Rewrite this text in a persuasive, compelling tone. Use strong rhetoric, emotional appeals, and convincing arguments.",
+  analytical: "Rewrite this text in an analytical, objective tone. Focus on data, evidence, logical reasoning, and balanced analysis.",
+  descriptive: "Rewrite this text in a descriptive, vivid tone. Use sensory details, rich imagery, and engaging descriptions.",
+};
 
-RULES:
-1. Keep the original meaning and key information intact
-2. Add natural human touches: occasional contractions, varied sentence lengths, informal connectors
-3. Remove robotic patterns: overly structured lists, formulaic transitions ("Furthermore," "In conclusion"), excessive hedging
-4. Add subtle personality: mild opinions, natural word choices, conversational flow
-5. Break up uniform sentence structures — mix short punchy sentences with longer flowing ones
-6. Remove filler phrases like "It's worth noting that" or "It is important to highlight"
-7. Keep the same language as the input
-8. Output ONLY the rewritten text, no explanations
-
-The goal is text that passes as human-written while preserving all original meaning.`;
+const PERSPECTIVE_PROMPTS: Record<string, string> = {
+  first_person: "Rewrite this text using first person (I, we, my, our). Make it personal and direct.",
+  third_person: "Rewrite this text using third person (he, she, they, it, one). Make it objective and detached.",
+};
 
 async function checkAndIncrementUsage(fingerprint: string): Promise<{ allowed: boolean; remaining: number }> {
   const today = getToday();
 
-  // 用 UPSERT 原子操作：查询 + 插入/更新一步完成
   await db.execute({
     sql: `INSERT INTO anonymous_usage (fingerprint, date, use_count)
           VALUES (?, ?, 1)
@@ -31,7 +30,6 @@ async function checkAndIncrementUsage(fingerprint: string): Promise<{ allowed: b
     args: [fingerprint, today],
   });
 
-  // 查询当前用量
   const result = await db.execute({
     sql: "SELECT use_count FROM anonymous_usage WHERE fingerprint = ? AND date = ?",
     args: [fingerprint, today],
@@ -46,7 +44,7 @@ async function checkAndIncrementUsage(fingerprint: string): Promise<{ allowed: b
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, fingerprint: clientFp } = await req.json();
+    const { text, mode, option, fingerprint: clientFp } = await req.json();
 
     if (!text || typeof text !== "string") {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -56,7 +54,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Text must be under 5000 characters" }, { status: 400 });
     }
 
-    // 服务端用量检查（用 IP + 浏览器指纹，清缓存无效）
+    if (!mode || !["tone", "perspective", "rephrase"].includes(mode)) {
+      return NextResponse.json({ error: "Invalid mode. Use 'tone', 'perspective', or 'rephrase'" }, { status: 400 });
+    }
+
+    // Build system prompt based on mode
+    let instruction = "";
+    if (mode === "tone") {
+      instruction = TONE_PROMPTS[option] || TONE_PROMPTS.formal;
+    } else if (mode === "perspective") {
+      instruction = PERSPECTIVE_PROMPTS[option] || PERSPECTIVE_PROMPTS.third_person;
+    } else {
+      instruction = "Rephrase this text while keeping the same meaning. Use different words and sentence structures to express the same ideas more clearly and naturally.";
+    }
+
+    const systemPrompt = `You are a professional text editor specializing in ${mode} transformation.
+
+RULES:
+1. Keep the original meaning and key information intact
+2. Apply the requested transformation precisely
+3. Keep the same language as the input
+4. Output ONLY the rewritten text, no explanations or meta-commentary
+5. Maintain natural, fluent writing
+
+Task: ${instruction}`;
+
+    // 服务端用量检查
     const fingerprint = getFingerprint(req, clientFp);
     const { allowed, remaining } = await checkAndIncrementUsage(fingerprint);
 
@@ -81,13 +104,13 @@ export async function POST(req: NextRequest) {
             {
               role: "user",
               parts: [
-                { text: SYSTEM_PROMPT },
-                { text: `\n\nRewrite this text to sound human:\n\n${text}` },
+                { text: systemPrompt },
+                { text: `\n\nTransform this text:\n\n${text}` },
               ],
             },
           ],
           generationConfig: {
-            temperature: 0.8,
+            temperature: 0.7,
             maxOutputTokens: 2048,
           },
         }),
@@ -100,18 +123,20 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json();
-    const humanized = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const result = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!humanized) {
+    if (!result) {
       return NextResponse.json({ error: "Failed to process text" }, { status: 500 });
     }
 
     return NextResponse.json({
-      humanized: humanized.trim(),
-      remaining: remaining - 1, // 已经 +1 了，所以 -1
+      result: result.trim(),
+      mode,
+      option,
+      remaining: remaining - 1,
     });
   } catch (err) {
-    console.error("Humanize error:", err);
+    console.error("Rewrite error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
