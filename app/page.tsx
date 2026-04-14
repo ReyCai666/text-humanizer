@@ -24,94 +24,101 @@ function ParagraphHighlight({
   selectedBlock?: number | null;
   onSelectBlock?: (idx: number | null) => void;
 }) {
-  // Use blocks if available, otherwise fall back to plain text paragraphs
   const contentBlocks: ContentBlock[] = blocks || text.split(/\n\n+/).filter(p => p.trim()).map(p => ({ type: "paragraph" as const, text: p.trim() }));
 
-  // Map sentences to blocks by character accumulation
-  let sentIdx = 0;
+  // Map sentences to blocks by text matching (not character counting)
+  function getBlockSentences(blockText: string): typeof sentences {
+    const normalized = blockText.toLowerCase().replace(/\s+/g, " ").trim();
+    return sentences.filter(s => {
+      const sNorm = s.text.toLowerCase().replace(/\s+/g, " ").trim();
+      return normalized.includes(sNorm) || sNorm.includes(normalized.slice(0, 40));
+    });
+  }
 
   return (
     <div className="space-y-3">
       {contentBlocks.map((block, bi) => {
-        // Accumulate sentences for this block
-        const blockSentences: typeof sentences = [];
-        let charsConsumed = 0;
-        const blockLen = block.text.length;
-
-        while (sentIdx < sentences.length && charsConsumed < blockLen) {
-          const s = sentences[sentIdx];
-          blockSentences.push(s);
-          charsConsumed += s.text.length + 1;
-          sentIdx++;
-        }
-
-        // Determine worst highlight in this block
-        const worstHighlight = blockSentences.reduce((worst, s) => {
+        const blockSents = getBlockSentences(block.text);
+        const worstHighlight = blockSents.reduce((worst, s) => {
           if (s.highlight === "red") return "red";
           if (s.highlight === "yellow" && worst !== "red") return "yellow";
           return worst;
         }, "none" as string);
 
         const isSelected = selectedBlock === bi;
-        const isClickable = worstHighlight !== "none";
+        const isClickable = blockSents.length > 0 && worstHighlight !== "none";
 
-        // Style based on block type
         const typeStyle =
-          block.type === "heading1" ? "text-lg font-bold text-white mb-2" :
-          block.type === "heading2" ? "text-base font-semibold text-slate-200 mb-1" :
-          block.type === "heading3" ? "text-sm font-semibold text-slate-300 mb-1" :
-          "text-sm text-slate-300 leading-[1.8]";
-
-        // Highlight border
-        const borderStyle =
-          worstHighlight === "red" ? "border-l-2 border-l-red-500/60" :
-          worstHighlight === "yellow" ? "border-l-2 border-l-yellow-500/50" :
-          "";
+          block.type === "heading1" ? "text-lg font-bold text-white" :
+          block.type === "heading2" ? "text-base font-semibold text-slate-200" :
+          block.type === "heading3" ? "text-sm font-semibold text-slate-300" :
+          "text-sm leading-[1.8]";
 
         return (
           <div
             key={bi}
             onClick={() => isClickable && onSelectBlock?.(isSelected ? null : bi)}
-            className={`pl-4 py-1 transition-all duration-200 ${borderStyle} ${
-              isClickable ? "cursor-pointer hover:bg-white/[0.03] rounded-r-lg" : ""
-            } ${isSelected ? "bg-white/[0.05] ring-1 ring-white/10 rounded-r-lg" : ""}`}
+            className={`
+              relative rounded-lg transition-all duration-200
+              ${block.type === "paragraph" ? "pl-3 py-1" : "py-1"}
+              ${isClickable ? "cursor-pointer hover:bg-white/[0.04]" : ""}
+              ${isSelected ? "bg-white/[0.06] ring-1 ring-white/10" : ""}
+              ${worstHighlight === "red" ? "border-l-[3px] border-l-red-500" :
+                worstHighlight === "yellow" ? "border-l-[3px] border-l-yellow-500" :
+                "border-l-[3px] border-l-transparent"}
+            `}
           >
-            {/* Render heading or paragraph */}
+            {/* Block content with inline sentence highlights */}
             {block.type !== "paragraph" ? (
               <div className={typeStyle}>{block.text}</div>
             ) : (
               <p className={typeStyle}>
-                {blockSentences.length > 0 ? (
-                  blockSentences.map((s, si) => {
-                    const bg = s.highlight === "red"
-                      ? "bg-red-500/15"
-                      : s.highlight === "yellow"
-                      ? "bg-yellow-500/10"
-                      : "";
-                    return (
-                      <span key={si} className={`${bg} rounded px-0.5 transition-colors`}>
-                        {s.text}{" "}
-                      </span>
-                    );
-                  })
+                {blockSents.length > 0 ? (
+                  blockSents.map((s, si) => (
+                    <span
+                      key={si}
+                      className={`
+                        transition-all duration-200 rounded-sm px-0.5
+                        ${s.highlight === "red" ? "bg-red-500/20 text-red-200" :
+                          s.highlight === "yellow" ? "bg-yellow-500/15 text-yellow-200" :
+                          "text-slate-300"}
+                      `}
+                      title={s.highlight !== "none" ? `AI probability: ${s.ai_probability}%` : undefined}
+                    >
+                      {s.text}{" "}
+                    </span>
+                  ))
                 ) : (
-                  block.text
+                  <span className="text-slate-300">{block.text}</span>
                 )}
               </p>
             )}
-            {/* Show score on hover for flagged blocks */}
+
+            {/* Inline score badge on hover/click for flagged blocks */}
             {isClickable && isSelected && (
-              <div className="mt-1 text-[10px] text-slate-500">
-                {blockSentences.filter(s => s.highlight === "red").length > 0 && (
-                  <span className="text-red-400 mr-3">
-                    {blockSentences.filter(s => s.highlight === "red").length} AI sentences
+              <div className="mt-2 flex items-center gap-3 animate-fade-in">
+                {blockSents.filter(s => s.highlight === "red").length > 0 && (
+                  <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-red-500/15 text-red-300 border border-red-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    {blockSents.filter(s => s.highlight === "red").length} likely AI
                   </span>
                 )}
-                {blockSentences.filter(s => s.highlight === "yellow").length > 0 && (
-                  <span className="text-yellow-400">
-                    {blockSentences.filter(s => s.highlight === "yellow").length} suspicious
+                {blockSents.filter(s => s.highlight === "yellow").length > 0 && (
+                  <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                    {blockSents.filter(s => s.highlight === "yellow").length} suspicious
                   </span>
                 )}
+                <span className="text-[10px] text-slate-500">
+                  avg {Math.round(blockSents.reduce((sum, s) => sum + s.ai_probability, 0) / blockSents.length)}% AI
+                </span>
+              </div>
+            )}
+
+            {/* Hover hint for clickable blocks */}
+            {isClickable && !isSelected && (
+              <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-slate-500">
+                Click to analyze
               </div>
             )}
           </div>
@@ -176,6 +183,7 @@ interface ContentBlock {
 function HomeContent() {
   const searchParams = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   // Auth
   const [user, setUserState] = useState(getUser());
@@ -421,7 +429,9 @@ function HomeContent() {
 
   async function handleAnalyze() {
     if (!dInput.trim() || dLoading || !canD) return;
-    setDLoading(true); setError(""); setDResult(null);
+    setDLoading(true); setError(""); setDResult(null); setSelectedBlock(null);
+    // Scroll to results area
+    setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     const result = await doAnalyze(dInput);
     if (result) {
       setDResult(result);
@@ -545,7 +555,7 @@ function HomeContent() {
                   tab === "detector" ? "bg-amber-500/20 text-amber-300" : "text-slate-400 hover:text-white"
                 }`}
               >
-                🔍 Detector
+                🎯 AI Score
               </button>
               <button
                 onClick={() => setTab("humanize")}
@@ -648,7 +658,7 @@ function HomeContent() {
             onClick={() => setTab("detector")}
             className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "detector" ? "bg-amber-500/20 text-amber-300" : "text-slate-400"}`}
           >
-            🔍 AI Detector
+            🎯 AI Score
           </button>
           <button
             onClick={() => setTab("humanize")}
@@ -669,8 +679,8 @@ function HomeContent() {
         {/* ═══════════════════════════════════════════════ */}
         {tab === "detector" && (
           <div className="animate-fade-up">
-            {/* Input Area (always visible) */}
-            {!dResult && (
+            {/* Input Area - hidden when loading or has results */}
+            {!dResult && !dLoading && (
               <div className="max-w-3xl mx-auto">
                 <div className="relative bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 focus-within:border-amber-500/30 focus-within:shadow-[0_0_30px_rgba(245,158,11,0.05)]">
                   <textarea
@@ -712,9 +722,9 @@ function HomeContent() {
               </div>
             )}
 
-            {/* Results (split layout) */}
-            {dResult && (
-              <div className="animate-fade-up">
+            {/* Results (show when loading or has results) */}
+            {(dLoading || dResult) && (
+              <div ref={resultsRef} className="animate-fade-up">
                 {/* Side-by-side document view */}
                 <div className="grid lg:grid-cols-2 gap-4">
                   {/* LEFT: Original text with formatting */}
@@ -773,7 +783,7 @@ function HomeContent() {
                             Scanning for AI patterns...
                           </div>
                         </div>
-                      ) : (
+                      ) : dResult ? (
                         <ParagraphHighlight
                           text={dInput}
                           sentences={dResult.sentences}
@@ -781,15 +791,42 @@ function HomeContent() {
                           selectedBlock={selectedBlock}
                           onSelectBlock={setSelectedBlock}
                         />
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>
 
                 {/* Score & Analysis Section (below the document view) */}
                 <div className="mt-6 grid lg:grid-cols-3 gap-4">
-                  {/* AI Score Card */}
-                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 text-center">
+                  {dLoading ? (
+                    <>
+                      {/* AI Score skeleton */}
+                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 text-center animate-pulse">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">AI Score</div>
+                        <div className="h-12 w-24 bg-slate-800 rounded mx-auto mb-3" />
+                        <div className="h-2 bg-slate-800 rounded-full mb-2" />
+                        <div className="h-4 w-20 bg-slate-800 rounded mx-auto" />
+                      </div>
+                      {/* Analysis skeleton */}
+                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 animate-pulse">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Analysis</div>
+                        <div className="h-4 bg-slate-800 rounded w-full mb-2" />
+                        <div className="h-4 bg-slate-800 rounded w-3/4 mb-2" />
+                        <div className="h-4 bg-slate-800 rounded w-1/2" />
+                      </div>
+                      {/* Suggestions skeleton */}
+                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 animate-pulse">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Suggestions</div>
+                        <div className="h-3 bg-slate-800 rounded w-full mb-2" />
+                        <div className="h-3 bg-slate-800 rounded w-5/6 mb-2" />
+                        <div className="h-3 bg-slate-800 rounded w-4/5 mb-2" />
+                        <div className="h-3 bg-slate-800 rounded w-3/4" />
+                      </div>
+                    </>
+                  ) : dResult && (
+                    <>
+                    {/* AI Score Card */}
+                    <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 text-center">
                     <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">AI Score</div>
                     <div className={`text-5xl font-bold ${scoreColor(dResult.overall_score)} transition-colors duration-500`}>
                       {dResult.overall_score}%
@@ -851,6 +888,8 @@ function HomeContent() {
                       </div>
                     )}
                   </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Legend */}
