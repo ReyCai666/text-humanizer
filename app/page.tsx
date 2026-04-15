@@ -669,8 +669,6 @@ function HomeContent() {
           </div>
         )}
 
-        {/* ─── Marketing Content (only if no content yet) ── */}
-        {!dResult && !hOutput && !rwOutput && <Marketing />}
 
         {/* ─── Mobile Tab Switch ───────────────────────── */}
         <div className="sm:hidden flex mb-4 rounded-xl bg-white/5 p-0.5 border border-white/10">
@@ -1151,6 +1149,11 @@ function HomeContent() {
             ))}
           </div>
         )}
+
+        {/* ═══════════════════════════════════════════════ */}
+        {/* MARKETING (below tools, above pricing)         */}
+        {/* ═══════════════════════════════════════════════ */}
+        {!dResult && !hOutput && !rwOutput && <Marketing />}
 
         {/* ═══════════════════════════════════════════════ */}
         {/* PRICING                                         */}

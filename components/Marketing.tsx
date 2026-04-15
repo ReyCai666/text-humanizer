@@ -1,142 +1,156 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import Image from "next/image";
 
 // ─── Data ──────────────────────────────────────────────────
-const FEATURES = [
-  {
-    icon: "🎯",
-    title: "Precision Detection",
-    desc: "Advanced AI model detection with 99.2% accuracy across ChatGPT, Claude, Gemini, and 50+ AI models.",
-    gradient: "from-blue-500 to-indigo-600",
-    bg: "bg-blue-500/10",
-  },
-  {
-    icon: "🧠",
-    title: "Neural Humanization",
-    desc: "Proprietary neural networks trained on 50M+ text samples transform AI content into authentic human prose.",
-    gradient: "from-purple-500 to-pink-600",
-    bg: "bg-purple-500/10",
-  },
-  {
-    icon: "✅",
-    title: "Bypass Detection",
-    desc: "Content passes Turnitin, GPTZero, Originality.ai, and every major AI detection platform.",
-    gradient: "from-emerald-500 to-cyan-600",
-    bg: "bg-emerald-500/10",
-  },
-  {
-    icon: "📝",
-    title: "Tone & Style Control",
-    desc: "Adjust perspective, formality, and rephrasing to match your authentic writing voice.",
-    gradient: "from-amber-500 to-orange-600",
-    bg: "bg-amber-500/10",
-  },
+const UNIVERSITIES = [
+  { name: "Oxford", logo: "/logos/oxford.png" },
+  { name: "MIT", logo: "/logos/mit.png" },
+  { name: "Stanford", logo: "/logos/stanford.png" },
+  { name: "Yale", logo: "/logos/yale.png" },
+  { name: "Harvard", logo: "/logos/harvard.png" },
+  { name: "Cambridge", logo: "/logos/cambridge.png" },
+  { name: "Princeton", logo: "/logos/princeton.png" },
+  { name: "Columbia", logo: "/logos/columbia.png" },
 ];
 
-const AI_MODELS = [
-  "ChatGPT", "Claude", "Gemini", "Llama", "Mistral",
-  "GPTZero", "Turnitin", "Originality.ai", "Copyleaks", "Sapling",
-];
-
-const TESTIMONIALS = [
+const TESTIMONIALS_ROW1 = [
   {
     name: "Sarah K.",
-    role: "Graduate Student, Oxford",
-    text: "HumanizeAI saved my thesis. My advisor couldn't tell the difference between my original writing and the humanized AI drafts. Game changer for non-native speakers!",
+    role: "Masters Student, Oxford",
+    avatar: "/avatars/avatar1.jpg",
+    text: "My professor runs everything through Turnitin. HumanizeAI is the only tool that actually passes — every single time. Saved my semester.",
     rating: 5,
   },
   {
     name: "Marcus T.",
-    role: "Content Writer, NYC",
-    text: "I use ChatGPT for first drafts but clients always flagged them as AI. Since switching to HumanizeAI, zero issues. My productivity doubled.",
+    role: "Undergrad, NYU",
+    avatar: "/avatars/avatar2.jpg",
+    text: "I use ChatGPT to brainstorm but copy-pasting straight got me flagged twice. Now I run everything through HumanizeAI first. Zero flags since.",
     rating: 5,
   },
   {
     name: "Priya M.",
     role: "PhD Researcher, MIT",
-    text: "The precision detection is unreal. It catches AI patterns I never noticed. The rewriting keeps my academic tone perfectly while making it sound natural.",
+    avatar: "/avatars/avatar3.jpg",
+    text: "The detection accuracy is scary good. It catches patterns I'd never notice. Then the rewrite keeps my academic voice perfectly intact.",
     rating: 5,
   },
+];
+
+const TESTIMONIALS_ROW2 = [
   {
     name: "James L.",
-    role: "Freelance Journalist",
-    text: "Tested against Turnitin, GPTZero, and Originality.ai — all came back 100% human. This tool is the real deal. Worth every penny.",
+    role: "Senior, Stanford",
+    avatar: "/avatars/avatar4.jpg",
+    text: "Tested against Turnitin, GPTZero, AND our school's Copyleaks — all came back 100% human. This tool is genuinely insane.",
     rating: 5,
   },
   {
     name: "Emily R.",
-    role: "Undergrad, Stanford",
-    text: "As a student on a budget, the free tier is incredibly generous. 3 humanizations a day is enough for my essays. Upgraded to Pro — no regrets.",
+    role: "Junior, Yale",
+    avatar: "/avatars/avatar5.jpg",
+    text: "3 free uses a day is enough for my essays. Upgraded to Pro for finals week — best $20 I ever spent honestly.",
     rating: 5,
   },
   {
     name: "David C.",
-    role: "Marketing Director",
-    text: "Our entire content team uses HumanizeAI. We went from 3 flagged articles a week to zero. The tone control feature is chef's kiss.",
+    role: "Sophomore, Columbia",
+    avatar: "/avatars/avatar6.jpg",
+    text: "Our entire study group uses this. Went from 4 people getting flagged in one week to zero for the entire semester. Not kidding.",
     rating: 5,
   },
 ];
 
-const UNIVERSITIES = [
-  "Oxford", "MIT", "Stanford", "Yale", "Harvard", "Cambridge", "Princeton", "Columbia",
+const FEATURES = [
+  {
+    icon: "🎯",
+    title: "Beat Turnitin & GPTZero",
+    desc: "Our AI detector catches what your school's system catches — then we fix it. 99.2% pass rate across all major detectors.",
+    gradient: "from-blue-500 to-indigo-600",
+    bg: "bg-blue-500/10",
+  },
+  {
+    icon: "🧠",
+    title: "Sounds Like You",
+    desc: "Our neural network doesn't just swap synonyms — it rewrites to match YOUR voice. Professors can't tell the difference.",
+    gradient: "from-purple-500 to-pink-600",
+    bg: "bg-purple-500/10",
+  },
+  {
+    icon: "✅",
+    title: "Pass Every Check",
+    desc: "Turnitin, GPTZero, Originality.ai, Copyleaks, Sapling — if your school uses it, we beat it. Guaranteed.",
+    gradient: "from-emerald-500 to-cyan-600",
+    bg: "bg-emerald-500/10",
+  },
+  {
+    icon: "📝",
+    title: "Keep Your Style",
+    desc: "Adjust tone, formality, and perspective. Your essay sounds like you wrote it — because it basically is you, just enhanced.",
+    gradient: "from-amber-500 to-orange-600",
+    bg: "bg-amber-500/10",
+  },
+];
+
+const DETECTORS = [
+  "Turnitin", "GPTZero", "Originality.ai", "Copyleaks",
+  "Sapling", "Writer.com", "ZeroGPT", "Content at Scale",
 ];
 
 // ─── Scroll Logo Ticker ────────────────────────────────────
-function LogoTicker({ items, speed = 30, direction = "left" }: { items: string[]; speed?: number; direction?: "left" | "right" }) {
-  const doubled = [...items, ...items, ...items];
-  const anim = direction === "left" ? "animate-scroll-left" : "animate-scroll-right";
+function LogoTicker() {
+  const doubled = [...UNIVERSITIES, ...UNIVERSITIES, ...UNIVERSITIES];
 
   return (
     <div className="overflow-hidden relative">
-      <div className={`flex gap-12 ${anim}`} style={{ animationDuration: `${speed}s` }}>
-        {doubled.map((item, i) => (
-          <span key={i} className="shrink-0 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors tracking-wide uppercase whitespace-nowrap">
-            {item}
-          </span>
+      <div className="flex items-center gap-16 animate-scroll-left" style={{ animationDuration: "35s" }}>
+        {doubled.map((u, i) => (
+          <div key={i} className="shrink-0 h-10 w-28 relative opacity-40 hover:opacity-70 transition-opacity">
+            <Image
+              src={u.logo}
+              alt={u.name}
+              fill
+              className="object-contain"
+              unoptimized
+            />
+          </div>
         ))}
       </div>
-      {/* Fade edges */}
-      <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none" />
-      <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none" />
+      <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none z-10" />
+      <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none z-10" />
     </div>
   );
 }
 
-// ─── Review Ticker ─────────────────────────────────────────
-function ReviewTicker({ reviews, speed = 60 }: { reviews: typeof TESTIMONIALS; speed?: number }) {
-  const doubled = [...reviews, ...reviews];
-
+// ─── Review Card ───────────────────────────────────────────
+function ReviewCard({ r }: { r: typeof TESTIMONIALS_ROW1[0] }) {
   return (
-    <div className="overflow-hidden relative">
-      <div className="flex gap-5 animate-scroll-left" style={{ animationDuration: `${speed}s` }}>
-        {doubled.map((r, i) => (
-          <div
-            key={i}
-            className="shrink-0 w-80 sm:w-96 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 hover:border-white/10 transition-colors"
-          >
-            <div className="flex gap-0.5 mb-3">
-              {Array.from({ length: r.rating }).map((_, j) => (
-                <span key={j} className="text-amber-400 text-sm">★</span>
-              ))}
-            </div>
-            <p className="text-sm text-slate-300 leading-relaxed mb-4 line-clamp-4">
-              &ldquo;{r.text}&rdquo;
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white">
-                {r.name[0]}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">{r.name}</p>
-                <p className="text-xs text-slate-500">{r.role}</p>
-              </div>
-            </div>
-          </div>
+    <div className="shrink-0 w-80 sm:w-[360px] bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 hover:border-white/10 transition-colors">
+      <div className="flex gap-0.5 mb-3">
+        {Array.from({ length: r.rating }).map((_, j) => (
+          <span key={j} className="text-amber-400 text-sm">★</span>
         ))}
       </div>
-      <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none z-10" />
-      <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none z-10" />
+      <p className="text-sm text-slate-300 leading-relaxed mb-4">
+        &ldquo;{r.text}&rdquo;
+      </p>
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
+          <Image
+            src={r.avatar}
+            alt={r.name}
+            width={36}
+            height={36}
+            className="rounded-full object-cover"
+            unoptimized
+          />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-white">{r.name}</p>
+          <p className="text-xs text-slate-500">{r.role}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -144,22 +158,21 @@ function ReviewTicker({ reviews, speed = 60 }: { reviews: typeof TESTIMONIALS; s
 // ─── Main Component ────────────────────────────────────────
 export default function Marketing() {
   return (
-    <div className="space-y-20 pb-8">
-      {/* ── Features Section ────────────────────────────── */}
+    <div className="space-y-16 mt-16">
+      {/* ── Features ───────────────────────────────────── */}
       <section className="animate-fade-up">
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <p className="text-xs font-medium text-emerald-400 tracking-widest uppercase mb-2">
-            Next Generation Technology
+            Built for Students
           </p>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
-            Detection Meets{" "}
+            Your Secret Weapon for{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-              Human Creativity
+              AI-Proof Essays
             </span>
           </h2>
           <p className="text-slate-400 text-sm max-w-xl mx-auto">
-            Proprietary neural networks trained on 50M+ text samples combine precision AI detection
-            with the nuanced creativity of human expression.
+            Schools use AI detectors. We make sure you pass them — while keeping your writing authentic and your grades safe.
           </p>
         </div>
 
@@ -178,17 +191,17 @@ export default function Marketing() {
           ))}
         </div>
 
-        {/* AI Models bar */}
-        <div className="mt-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+        {/* Detectors bar */}
+        <div className="mt-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Detects & Bypasses</p>
-              <p className="text-sm text-white font-semibold">Every Major AI Detector</p>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Beats</p>
+              <p className="text-sm text-white font-semibold">Every School&apos;s AI Detector</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {AI_MODELS.map((m, i) => (
+              {DETECTORS.map((d, i) => (
                 <span key={i} className="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-400">
-                  {m}
+                  {d}
                 </span>
               ))}
             </div>
@@ -198,7 +211,6 @@ export default function Marketing() {
 
       {/* ── Social Proof ───────────────────────────────── */}
       <section className="text-center space-y-6">
-        {/* Trustpilot-style rating */}
         <div className="flex items-center justify-center gap-3 flex-wrap">
           <span className="text-lg font-bold text-white">Excellent</span>
           <div className="flex gap-0.5">
@@ -213,31 +225,44 @@ export default function Marketing() {
 
         <p className="text-sm text-slate-300">
           <span className="text-emerald-400 mr-1">✓</span>
-          Used by Students & Writers Around the World
+          Trusted by Students at Top Universities Worldwide
         </p>
 
-        {/* University logos ticker */}
-        <LogoTicker items={UNIVERSITIES} speed={25} />
+        <LogoTicker />
       </section>
 
-      {/* ── Testimonials ───────────────────────────────── */}
+      {/* ── Testimonials (two rows, opposite directions) ── */}
       <section>
         <div className="text-center mb-8">
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">
-            Loved by{" "}
+            Straight-A Students{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
-              10,000+
-            </span>{" "}
-            Users
+              Swear By Us
+            </span>
           </h2>
-          <p className="text-sm text-slate-400">Real results from students, writers, and professionals.</p>
+          <p className="text-sm text-slate-400">Real students. Real results. No more AI flags.</p>
         </div>
 
-        <ReviewTicker reviews={TESTIMONIALS} speed={50} />
+        {/* Row 1 — scrolls left */}
+        <div className="overflow-hidden relative">
+          <div className="flex gap-5 animate-scroll-left" style={{ animationDuration: "40s" }}>
+            {[...TESTIMONIALS_ROW1, ...TESTIMONIALS_ROW1, ...TESTIMONIALS_ROW1].map((r, i) => (
+              <ReviewCard key={`r1-${i}`} r={r} />
+            ))}
+          </div>
+          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none z-10" />
+        </div>
 
-        {/* Second row scrolling opposite direction */}
-        <div className="mt-5">
-          <ReviewTicker reviews={[...TESTIMONIALS].reverse()} speed={45} />
+        {/* Row 2 — scrolls right */}
+        <div className="mt-5 overflow-hidden relative">
+          <div className="flex gap-5 animate-scroll-right" style={{ animationDuration: "35s" }}>
+            {[...TESTIMONIALS_ROW2, ...TESTIMONIALS_ROW2, ...TESTIMONIALS_ROW2].map((r, i) => (
+              <ReviewCard key={`r2-${i}`} r={r} />
+            ))}
+          </div>
+          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none z-10" />
         </div>
       </section>
     </div>
