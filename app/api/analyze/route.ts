@@ -3,35 +3,61 @@ import { NextRequest, NextResponse } from "next/server";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
-const ANALYSIS_PROMPT = `AI detection expert. Analyze text for AI probability.
+// Split text into sentences
+function splitSentences(text: string): string[] {
+  const clean = text.replace(/\s+/g, " ").trim();
+  const parts = clean.match(/[^.!?]*[.!?]+(?:\s+|$)|[^.!?]+$/g);
+  if (!parts) return [clean];
+  return parts.map(s => s.trim()).filter(s => s.length > 0);
+}
 
-Respond ONLY with valid JSON (no markdown, no code blocks):
-{"overall_score":<0-100>,"human_score":<0-100>,"summary":"<1 sentence>","sentences":[{"text":"<sentence>","ai_probability":<0-100>,"highlight":"<none|yellow|red>"}],"indicators":["<pattern>"]}
+// Single prompt that does everything: score + analyze
+function makePrompt(sentences: string[], fullTextPreview: string): string {
+  return `You are an AI detection expert. Analyze this text.
+
+TEXT PREVIEW (first 2000 chars):
+${fullTextPreview.slice(0, 2000)}
+
+SENTENCES TO SCORE (numbered):
+${sentences.map((s, i) => `[${i}] ${s}`).join("\n")}
+
+Respond ONLY with valid JSON:
+{
+  "scores": [<one 0-100 number per sentence, exactly ${sentences.length} numbers>],
+  "overall_score": <0-100>,
+  "summary": "<2-3 sentences analyzing the writing>",
+  "indicators": ["<specific AI pattern, be detailed>"],
+  "feedback": ["<actionable improvement tip, be specific>"]
+}
 
 Rules:
-- overall_score: 100=definitely AI, 0=definitely human
-- highlight: "none" if ai_probability<30, "yellow" if 30-69, "red" if >=70
-- Split into sentences, score each
-- Be concise. Output ONLY valid JSON`;
+- scores array MUST have exactly ${sentences.length} integers
+- Be SPECIFIC: instead of "generic phrasing", say "uses vague words like 'numerous' and 'various' instead of specific examples"
+- feedback must be actionable: instead of "be more creative", say "replace 'numerous industries' with specific sectors like 'healthcare diagnostics' or 'supply chain logistics'"
+- Output ONLY valid JSON, no markdown`;
+}
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
   try {
     const { text } = await req.json();
-
     if (!text || typeof text !== "string") {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
-
     if (text.length > 30000) {
       return NextResponse.json({ error: "Text must be under 30,000 characters" }, { status: 400 });
     }
-
     if (!GEMINI_API_KEY) {
       return NextResponse.json({ error: "Service not configured" }, { status: 500 });
     }
 
-    // Truncate to avoid token limits — 8000 chars is enough for accurate analysis
-    const analysisText = text.length > 8000 ? text.slice(0, 8000) + "\n\n[Truncated]" : text;
+    // Split into sentences — limit to first 60 to fit token budget
+    const allSentences = splitSentences(text);
+    const MAX_SENTENCES = 60;
+    const sentencesToScore = allSentences.slice(0, MAX_SENTENCES);
+
+    // Only send first 3000 chars of text for analysis context (keeps prompt small = faster)
+    const prompt = makePrompt(sentencesToScore, text.slice(0, 3000));
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
@@ -39,18 +65,10 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                { text: ANALYSIS_PROMPT },
-                { text: `\n\nAnalyze:\n\n${analysisText}` },
-              ],
-            },
-          ],
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 4096,
+            maxOutputTokens: 8192,
             responseMimeType: "application/json",
           },
         }),
@@ -64,160 +82,58 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
     if (!rawText) {
       return NextResponse.json({ error: "Failed to analyze text" }, { status: 500 });
     }
 
-    // Parse the JSON response with robust handling
-    let result;
+    // Parse response
+    const cleaned = rawText.replace(/^```[\w]*\s*\n?/i, "").replace(/\n?\s*```\s*$/i, "").trim();
+    let parsed: any;
     try {
-      // Step 1: Strip markdown code blocks (robust — handles any language tag)
-      let cleaned = rawText
-        .replace(/^```[\w]*\s*\n?/i, "")
-        .replace(/\n?\s*```\s*$/i, "")
-        .trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        try { parsed = JSON.parse(match[0]); } catch {}
+      }
+    }
 
-      // Step 2: Try direct parse first
-      try {
-        result = JSON.parse(cleaned);
-      } catch {
-        // Step 3: Extract JSON object using brace matching
-        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          let jsonStr = jsonMatch[0];
-
-          // Step 4: Fix truncated JSON - close open brackets/braces
-          result = parsePartialJson(jsonStr);
-        } else {
-          throw new Error("No JSON found in response");
-        }
-      }
-
-      // Validate the result has required fields
-      if (typeof result.overall_score !== "number") {
-        result.overall_score = 50;
-      }
-      if (typeof result.human_score !== "number") {
-        result.human_score = 100 - result.overall_score;
-      }
-      if (!Array.isArray(result.sentences)) {
-        result.sentences = [];
-      }
-      if (!Array.isArray(result.indicators)) {
-        result.indicators = [];
-      }
-      if (!result.summary) {
-        result.summary = "Analysis completed.";
-      }
-    } catch (err) {
-      console.error("Failed to parse AI analysis response:", rawText.slice(0, 500));
-      // Return a fallback response
+    if (!parsed) {
       return NextResponse.json({
-        overall_score: 50,
-        human_score: 50,
-        summary: "Could not fully analyze text. Please try again with shorter text.",
-        sentences: [],
-        indicators: ["Analysis incomplete"],
+        overall_score: 50, human_score: 50,
+        summary: "Could not parse analysis. Please try again.",
+        sentences: [], indicators: [], feedback: [],
       });
     }
 
-    return NextResponse.json(result);
+    // Build sentence results
+    const scores: number[] = Array.isArray(parsed.scores) ? parsed.scores : [];
+    const sentences = sentencesToScore.map((sText, i) => {
+      const prob = Math.min(100, Math.max(0, scores[i] ?? 30));
+      return {
+        text: sText,
+        ai_probability: prob,
+        highlight: prob >= 70 ? "red" as const : prob >= 30 ? "yellow" as const : "none" as const,
+      };
+    });
+
+    // Pad for remaining sentences (beyond MAX)
+    for (let i = MAX_SENTENCES; i < allSentences.length; i++) {
+      sentences.push({ text: allSentences[i], ai_probability: 30, highlight: "none" as const });
+    }
+
+    console.log(`Analysis done in ${Date.now() - startTime}ms, ${sentences.length} sentences`);
+
+    return NextResponse.json({
+      overall_score: typeof parsed.overall_score === "number" ? parsed.overall_score : 50,
+      human_score: typeof parsed.overall_score === "number" ? 100 - parsed.overall_score : 50,
+      summary: parsed.summary || "Analysis completed.",
+      sentences,
+      indicators: Array.isArray(parsed.indicators) ? parsed.indicators : [],
+      feedback: Array.isArray(parsed.feedback) ? parsed.feedback : [],
+    });
   } catch (err) {
-    console.error("Analysis error:", err);
+    console.error("Analysis error:", err, `after ${Date.now() - startTime}ms`);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-// Parse potentially truncated JSON by closing open structures
-function parsePartialJson(jsonStr: string): any {
-  try {
-    return JSON.parse(jsonStr);
-  } catch {
-    // Try to fix truncated JSON
-    let fixed = jsonStr;
-
-    // Count open/close braces and brackets
-    let braces = 0;
-    let brackets = 0;
-    let inString = false;
-    let escape = false;
-
-    for (let i = 0; i < fixed.length; i++) {
-      const ch = fixed[i];
-      if (escape) {
-        escape = false;
-        continue;
-      }
-      if (ch === "\\") {
-        escape = true;
-        continue;
-      }
-      if (ch === '"') {
-        inString = !inString;
-        continue;
-      }
-      if (inString) continue;
-
-      if (ch === "{") braces++;
-      else if (ch === "}") braces--;
-      else if (ch === "[") brackets++;
-      else if (ch === "]") brackets--;
-    }
-
-    // If inside a string, close it
-    if (inString) {
-      fixed += '"';
-    }
-
-    // Close any truncated string value (look for incomplete value)
-    // e.g., "highlight": "re  -> add closing quote
-    const lastQuote = fixed.lastIndexOf('"');
-    if (lastQuote > 0) {
-      const afterQuote = fixed.slice(lastQuote + 1).trim();
-      if (afterQuote && !afterQuote.startsWith(",") && !afterQuote.startsWith("}") && !afterQuote.startsWith("]")) {
-        // Incomplete value after quote - truncate to last complete field
-        const lastCompleteField = fixed.lastIndexOf('",');
-        if (lastCompleteField > 0) {
-          fixed = fixed.slice(0, lastCompleteField + 1);
-          // Reset counts
-          braces = 0;
-          brackets = 0;
-          inString = false;
-          for (let i = 0; i < fixed.length; i++) {
-            const ch = fixed[i];
-            if (inString) {
-              if (ch === '"') inString = false;
-              continue;
-            }
-            if (ch === '"') {
-              inString = true;
-              continue;
-            }
-            if (ch === "{") braces++;
-            else if (ch === "}") braces--;
-            else if (ch === "[") brackets++;
-            else if (ch === "]") brackets--;
-          }
-        }
-      }
-    }
-
-    // Remove trailing commas
-    fixed = fixed.replace(/,\s*([\]}])/g, "$1");
-
-    // Close open arrays
-    while (brackets > 0) {
-      fixed += "]";
-      brackets--;
-    }
-
-    // Close open objects
-    while (braces > 0) {
-      fixed += "}";
-      braces--;
-    }
-
-    return JSON.parse(fixed);
   }
 }

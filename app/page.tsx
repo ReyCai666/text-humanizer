@@ -75,11 +75,11 @@ function HighlightedText({
   );
 }
 
-const TIER_LIMITS: Record<string, { humanize: number; scan: number; words: number }> = {
-  free: { humanize: 3, scan: 3, words: 5000 },
-  basic: { humanize: 30, scan: 10, words: 5000 },
-  pro: { humanize: 100, scan: 50, words: 15000 },
-  max: { humanize: 9999, scan: 300, words: 30000 },
+const TIER_LIMITS: Record<string, { humanize: number; scan: number; rewrite: number; words: number }> = {
+  free:   { humanize: 3,   scan: 3,   rewrite: 3,   words: 3000 },
+  basic:  { humanize: 30,  scan: 10,  rewrite: 30,  words: 8000 },
+  pro:    { humanize: 100, scan: 50,  rewrite: 100, words: 15000 },
+  max:    { humanize: 9999,scan: 300, rewrite: 9999, words: 30000 },
 };
 
 // ─── Local Storage Helpers ─────────────────────────────────
@@ -626,8 +626,8 @@ function HomeContent() {
             {/* Plan cards */}
             <div className="space-y-2 mb-4">
               {[
-                { name: "Basic", price: "$9.99", vid: "1524022", limit: showPaywall === "scan" ? "10 scans/day" : "30/day" },
-                { name: "Pro", price: "$19.99", vid: "1524636", limit: showPaywall === "scan" ? "50 scans/day" : "100/day" },
+                { name: "Basic", price: "$9.99", vid: "1524022", limit: showPaywall === "scan" ? "10 scans/day" : showPaywall === "humanize" ? "30 humanizations/day" : "30 rewrites/day" },
+                { name: "Pro", price: "$19.99", vid: "1524636", limit: showPaywall === "scan" ? "50 scans/day" : showPaywall === "humanize" ? "100 humanizations/day" : "100 rewrites/day" },
               ].map(plan => (
                 <button
                   key={plan.name}
@@ -1166,9 +1166,9 @@ function HomeContent() {
             </div>
             <div className="grid sm:grid-cols-3 gap-3">
               {[
-                { name: "Basic", price: "$9.99", vid: "1524022", features: ["30 humanizations/day", "10 AI scans/day", "5,000 words/input", "File upload"], popular: false },
-                { name: "Pro", price: "$19.99", vid: "1524636", features: ["100 humanizations/day", "50 AI scans/day", "15,000 words/input", "Sentence rewrite"], popular: true },
-                { name: "Max", price: "$39.99", vid: "1524640", features: ["Unlimited humanizations", "300 AI scans/day", "30,000 words/input", "Priority"], popular: false },
+                { name: "Basic", price: "$9.99", vid: "1524022", features: ["30 humanizations/day", "10 AI scans/day", "30 rewrites/day", "8,000 words/input", "File upload"], popular: false },
+                { name: "Pro", price: "$19.99", vid: "1524636", features: ["100 humanizations/day", "50 AI scans/day", "100 rewrites/day", "15,000 words/input", "Sentence rewrite"], popular: true },
+                { name: "Max", price: "$39.99", vid: "1524640", features: ["Unlimited humanizations", "300 AI scans/day", "Unlimited rewrites", "30,000 words/input", "Priority processing"], popular: false },
               ].map((plan) => (
                 <div key={plan.name} className={`relative p-5 rounded-2xl border transition-all duration-300 hover:translate-y-[-2px] ${
                   plan.popular ? "bg-amber-500/5 border-amber-500/20" : "bg-white/[0.02] border-white/5 hover:border-white/10"

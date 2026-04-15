@@ -16,25 +16,13 @@ export default async function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #0a0a0f 0%, #0f1a1a 50%, #0a0a0f 100%)",
+          background: "#0a0a0f",
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        {/* Grid pattern background */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-        {/* Logo mark */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             width: 80,
             height: 80,
             borderRadius: 20,
@@ -43,13 +31,15 @@ export default async function OGImage() {
             fontSize: 36,
             fontWeight: 800,
             color: "#000",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           H
         </div>
-        {/* Title */}
         <div
           style={{
+            display: "flex",
             fontSize: 64,
             fontWeight: 800,
             color: "#fff",
@@ -59,9 +49,9 @@ export default async function OGImage() {
         >
           Humanize<span style={{ color: "#10b981" }}>AI</span>
         </div>
-        {/* Subtitle */}
         <div
           style={{
+            display: "flex",
             fontSize: 24,
             color: "#94a3b8",
             maxWidth: 700,
@@ -71,12 +61,12 @@ export default async function OGImage() {
         >
           AI Text Humanizer &amp; Detection Tool
         </div>
-        {/* Tags */}
         <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
           {["Detect AI", "Humanize", "Verify", "Free"].map((tag) => (
             <div
               key={tag}
               style={{
+                display: "flex",
                 padding: "8px 20px",
                 borderRadius: 999,
                 border: "1px solid rgba(255,255,255,0.1)",
