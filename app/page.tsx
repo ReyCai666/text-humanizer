@@ -7,6 +7,7 @@ import Link from "next/link";
 
 const PdfPreview = dynamic(() => import("@/components/PdfPreview"), { ssr: false });
 const Marketing = dynamic(() => import("@/components/Marketing"), { ssr: false });
+const WordLimit = dynamic(() => import("@/components/WordLimit"), { ssr: false });
 
 // ─── Config ────────────────────────────────────────────────
 const FREE_HUMANIZE_LIMIT = 3;
@@ -331,6 +332,7 @@ function HomeContent() {
 
   async function handleHumanize() {
     if (!hInput.trim() || hLoading) return;
+    if (hInput.length > limits.words) { setError(`Text exceeds your ${limits.words.toLocaleString()} character limit. Shorten it or upgrade your plan.`); return; }
     if (!canH) { setShowPaywall("humanize"); return; }
     setHLoading(true); setError(""); setHOutput("");
     const result = await doHumanize(hInput);
@@ -347,6 +349,7 @@ function HomeContent() {
   // ─── Rewrite ──────────────────────────────────────────
   async function handleRewrite() {
     if (!rwInput.trim() || rwLoading) return;
+    if (rwInput.length > limits.words) { setError(`Text exceeds your ${limits.words.toLocaleString()} character limit. Shorten it or upgrade your plan.`); return; }
     if (!canRw) { setShowPaywall("rewrite"); return; }
     setRwLoading(true); setError(""); setRwOutput("");
     try {
@@ -382,6 +385,7 @@ function HomeContent() {
 
   async function handleAnalyze() {
     if (!dInput.trim() || dLoading) return;
+    if (dInput.length > limits.words) { setError(`Text exceeds your ${limits.words.toLocaleString()} character limit. Shorten it or upgrade your plan.`); return; }
     if (!canD) { setShowPaywall("scan"); return; }
     setDLoading(true); setError(""); setDResult(null); setSelectedBlock(null);
     // Scroll to results area
@@ -537,6 +541,11 @@ function HomeContent() {
                     {dLeft} scans left
                   </span>
                 )}
+                {!isPro && (
+                  <Link href="/pricing" className="text-xs px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-300 hover:from-amber-500/20 hover:to-orange-500/20 transition-all font-medium">
+                    ⚡ Upgrade
+                  </Link>
+                )}
                 <Link href="/account" className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
                   {user.tier.toUpperCase()}
                 </Link>
@@ -557,6 +566,9 @@ function HomeContent() {
                 >
                   Sign In
                 </button>
+                <Link href="/pricing" className="text-xs px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-300 hover:from-amber-500/20 hover:to-orange-500/20 transition-all font-medium">
+                  Pricing
+                </Link>
               </div>
             )}
           </div>
@@ -716,7 +728,7 @@ function HomeContent() {
                         📎 Upload file
                       </button>
                       <input ref={fileRef} type="file" accept=".txt,.md,.csv,.pdf,.docx" className="hidden" onChange={handleFile} />
-                      <span className="text-xs text-slate-600">{dInput.length.toLocaleString()} chars</span>
+                      <WordLimit current={dInput.length} max={limits.words} tier={tier} />
                     </div>
                     <button
                       onClick={handleAnalyze}
@@ -945,7 +957,7 @@ function HomeContent() {
                   className="w-full h-64 sm:h-80 bg-transparent p-5 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none"
                 />
                 <div className="flex items-center justify-between px-5 py-3 border-t border-white/5">
-                  <span className="text-xs text-slate-600">{hInput.length.toLocaleString()} chars</span>
+                  <WordLimit current={hInput.length} max={limits.words} tier={tier} />
                   <button
                     onClick={handleHumanize}
                     disabled={!hInput.trim() || hLoading || !canH}
@@ -1078,7 +1090,7 @@ function HomeContent() {
                   className="w-full h-64 sm:h-80 bg-transparent p-5 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none"
                 />
                 <div className="flex items-center justify-between px-5 py-3 border-t border-white/5">
-                  <span className="text-xs text-slate-600">{rwInput.length.toLocaleString()} chars</span>
+                  <WordLimit current={rwInput.length} max={limits.words} tier={tier} />
                   <button
                     onClick={handleRewrite}
                     disabled={!rwInput.trim() || rwLoading || !canRw}
@@ -1164,11 +1176,12 @@ function HomeContent() {
               <h2 className="text-xl font-bold">Choose your plan</h2>
               <p className="text-sm text-slate-400 mt-1">Start free, upgrade when you need more.</p>
             </div>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { name: "Basic", price: "$9.99", vid: "1524022", features: ["30 humanizations/day", "10 AI scans/day", "30 rewrites/day", "8,000 words/input", "File upload"], popular: false },
-                { name: "Pro", price: "$19.99", vid: "1524636", features: ["100 humanizations/day", "50 AI scans/day", "100 rewrites/day", "15,000 words/input", "Sentence rewrite"], popular: true },
-                { name: "Max", price: "$39.99", vid: "1524640", features: ["Unlimited humanizations", "300 AI scans/day", "Unlimited rewrites", "30,000 words/input", "Priority processing"], popular: false },
+                { name: "Free", price: "Free", vid: null, perDay: "", features: ["3 scans/day", "3 humanizations/day", "3 rewrites/day", "3,000 chars/input"], popular: false },
+                { name: "Basic", price: "$9.99", vid: "1524022", perDay: "$0.32/day", features: ["10 scans/day", "30 humanizations/day", "30 rewrites/day", "8,000 chars/input", "File upload"], popular: false },
+                { name: "Pro", price: "$19.99", vid: "1524636", perDay: "$0.65/day", features: ["50 scans/day", "100 humanizations/day", "100 rewrites/day", "15,000 chars/input", "Sentence rewrite", "File upload"], popular: true },
+                { name: "Max", price: "$39.99", vid: "1524640", perDay: "$1.29/day", features: ["300 scans/day", "Unlimited humanizations", "Unlimited rewrites", "30,000 chars/input", "Priority (2× speed)", "File upload"], popular: false },
               ].map((plan) => (
                 <div key={plan.name} className={`relative p-5 rounded-2xl border transition-all duration-300 hover:translate-y-[-2px] ${
                   plan.popular ? "bg-amber-500/5 border-amber-500/20" : "bg-white/[0.02] border-white/5 hover:border-white/10"
@@ -1179,7 +1192,14 @@ function HomeContent() {
                     </div>
                   )}
                   <div className="text-sm font-semibold mb-1">{plan.name}</div>
-                  <div className="text-2xl font-bold mb-3">{plan.price} <span className="text-xs font-normal text-slate-500">AUD/mo</span></div>
+                  <div className="text-2xl font-bold mb-0.5">
+                    {plan.price === "Free" ? "Free" : plan.price}
+                    {plan.price !== "Free" && <span className="text-xs font-normal text-slate-500"> AUD/mo</span>}
+                  </div>
+                  {plan.perDay && (
+                    <div className="text-[10px] text-emerald-400/80 mb-3 font-medium">{plan.perDay} — less than a coffee ☕</div>
+                  )}
+                  {plan.price === "Free" && <div className="text-[10px] text-slate-600 mb-3">No credit card needed</div>}
                   <ul className="space-y-1.5 mb-4">
                     {plan.features.map((f, i) => (
                       <li key={i} className="text-xs text-slate-400 flex items-center gap-1.5">
@@ -1187,17 +1207,23 @@ function HomeContent() {
                       </li>
                     ))}
                   </ul>
-                  <button
-                    onClick={() => handleCheckout(plan.vid)}
-                    disabled={checkoutLoading}
-                    className={`w-full py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      plan.popular
-                        ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white"
-                        : "border border-white/10 hover:bg-white/5"
-                    } disabled:opacity-50`}
-                  >
-                    Get {plan.name}
-                  </button>
+                  {plan.vid ? (
+                    <button
+                      onClick={() => handleCheckout(plan.vid)}
+                      disabled={checkoutLoading}
+                      className={`w-full py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                        plan.popular
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white"
+                          : "border border-white/10 hover:bg-white/5"
+                      } disabled:opacity-50`}
+                    >
+                      Get {plan.name}
+                    </button>
+                  ) : (
+                    <div className="w-full py-2 rounded-xl text-sm font-medium text-center border border-white/5 text-slate-500">
+                      You&apos;re on this plan
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

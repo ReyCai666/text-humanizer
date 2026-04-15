@@ -2,6 +2,7 @@ const PLANS: {
   name: string;
   price: string;
   period: string;
+  perDay: string;
   description: string;
   features: string[];
   vid: string | null;
@@ -11,12 +12,13 @@ const PLANS: {
     name: "Free",
     price: "0",
     period: "",
-    description: "Try it out",
+    perDay: "",
+    description: "Try it out — no credit card needed",
     features: [
       "3 AI scans per day",
       "3 humanizations per day",
       "3 rewrites per day",
-      "Up to 3,000 words per input",
+      "Up to 3,000 characters per input",
       "Basic AI detection",
     ],
     vid: null,
@@ -26,12 +28,13 @@ const PLANS: {
     name: "Basic",
     price: "9.99",
     period: "/mo",
+    perDay: "$0.32/day",
     description: "For casual users",
     features: [
       "10 AI scans per day",
       "30 humanizations per day",
       "30 rewrites per day",
-      "Up to 8,000 words per input",
+      "Up to 8,000 characters per input",
       "File upload (PDF, DOCX, TXT)",
       "Sentence-level AI highlights",
       "Tone & perspective controls",
@@ -43,12 +46,13 @@ const PLANS: {
     name: "Pro",
     price: "19.99",
     period: "/mo",
+    perDay: "$0.65/day",
     description: "For students & writers",
     features: [
       "50 AI scans per day",
       "100 humanizations per day",
       "100 rewrites per day",
-      "Up to 15,000 words per input",
+      "Up to 15,000 characters per input",
       "File upload (PDF, DOCX, TXT)",
       "Sentence-level AI highlights",
       "One-click sentence rewrite",
@@ -61,12 +65,13 @@ const PLANS: {
     name: "Max",
     price: "39.99",
     period: "/mo",
+    perDay: "$1.29/day",
     description: "For power users & teams",
     features: [
       "300 AI scans per day",
       "Unlimited humanizations",
       "Unlimited rewrites",
-      "Up to 30,000 words per input",
+      "Up to 30,000 characters per input",
       "File upload (PDF, DOCX, TXT)",
       "Sentence-level AI highlights",
       "One-click sentence rewrite",

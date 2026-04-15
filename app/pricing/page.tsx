@@ -70,10 +70,15 @@ export default function PricingPage() {
                 {plan.price === "0" ? "Free" : `$${plan.price}`}
                 {plan.period && <span className="text-xs font-normal text-slate-500"> AUD{plan.period}</span>}
               </div>
+              {plan.perDay && (
+                <div className="text-[10px] text-emerald-400/80 mb-1 font-medium">{plan.perDay} — less than a coffee ☕</div>
+              )}
               {plan.price !== "0" && (
                 <div className="text-[10px] text-slate-600 mb-4">Billed monthly · Cancel anytime</div>
               )}
-              {plan.price === "0" && <div className="mb-4" />}
+              {plan.price === "0" && (
+                <div className="text-[10px] text-slate-600 mb-4">No credit card needed</div>
+              )}
 
               <ul className="space-y-2.5 mb-6 flex-1">
                 {plan.features.map((f, i) => (
