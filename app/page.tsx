@@ -3,125 +3,72 @@
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const PdfPreview = dynamic(() => import("@/components/PdfPreview"), { ssr: false });
+const Marketing = dynamic(() => import("@/components/Marketing"), { ssr: false });
 
 // ─── Config ────────────────────────────────────────────────
 const FREE_HUMANIZE_LIMIT = 3;
 const FREE_SCAN_LIMIT = 3;
 
-// ─── Paragraph Highlight Component ─────────────────────
-function ParagraphHighlight({
-  text,
+// ─── Static Text Highlight: just renders text with colored highlights ──
+function HighlightedText({
+  originalText,
   sentences,
-  blocks,
-  selectedBlock,
-  onSelectBlock,
 }: {
-  text: string;
+  originalText: string;
   sentences: { text: string; ai_probability: number; highlight: "none" | "yellow" | "red" }[];
-  blocks?: ContentBlock[] | null;
-  selectedBlock?: number | null;
-  onSelectBlock?: (idx: number | null) => void;
 }) {
-  const contentBlocks: ContentBlock[] = blocks || text.split(/\n\n+/).filter(p => p.trim()).map(p => ({ type: "paragraph" as const, text: p.trim() }));
+  // For each flagged sentence, find its position in the original text
+  const flagged = sentences
+    .map((s, i) => ({ ...s, idx: i }))
+    .filter(s => s.highlight !== "none")
+    .map(s => {
+      const norm = s.text.replace(/\s+/g, " ").trim().toLowerCase();
+      const start = originalText.toLowerCase().indexOf(norm.slice(0, Math.min(50, norm.length)));
+      return { ...s, start: start >= 0 ? start : -1, norm };
+    })
+    .filter(s => s.start >= 0)
+    .sort((a, b) => a.start - b.start);
 
-  // Map sentences to blocks by text matching (not character counting)
-  function getBlockSentences(blockText: string): typeof sentences {
-    const normalized = blockText.toLowerCase().replace(/\s+/g, " ").trim();
-    return sentences.filter(s => {
-      const sNorm = s.text.toLowerCase().replace(/\s+/g, " ").trim();
-      return normalized.includes(sNorm) || sNorm.includes(normalized.slice(0, 40));
-    });
+  // Build render segments: plain text alternating with highlighted spans
+  const parts: { text: string; highlight: "none" | "yellow" | "red"; pct: number }[] = [];
+  let pos = 0;
+
+  for (const f of flagged) {
+    if (f.start < pos) continue; // skip overlapping
+    if (f.start > pos) {
+      parts.push({ text: originalText.slice(pos, f.start), highlight: "none", pct: 0 });
+    }
+    const end = Math.min(f.start + f.text.length, originalText.length);
+    parts.push({ text: originalText.slice(f.start, end), highlight: f.highlight, pct: f.ai_probability });
+    pos = end;
+  }
+  if (pos < originalText.length) {
+    parts.push({ text: originalText.slice(pos), highlight: "none", pct: 0 });
   }
 
+  if (parts.length === 0) {
+    parts.push({ text: originalText, highlight: "none", pct: 0 });
+  }
+
+  // Use div (not p) to avoid hydration issues with complex children
   return (
-    <div className="space-y-3">
-      {contentBlocks.map((block, bi) => {
-        const blockSents = getBlockSentences(block.text);
-        const worstHighlight = blockSents.reduce((worst, s) => {
-          if (s.highlight === "red") return "red";
-          if (s.highlight === "yellow" && worst !== "red") return "yellow";
-          return worst;
-        }, "none" as string);
-
-        const isSelected = selectedBlock === bi;
-        const isClickable = blockSents.length > 0 && worstHighlight !== "none";
-
-        const typeStyle =
-          block.type === "heading1" ? "text-lg font-bold text-white" :
-          block.type === "heading2" ? "text-base font-semibold text-slate-200" :
-          block.type === "heading3" ? "text-sm font-semibold text-slate-300" :
-          "text-sm leading-[1.8]";
-
+    <div style={{ fontSize: "14px", lineHeight: 1.9, color: "#cbd5e1" }}>
+      {parts.map((seg, i) => {
+        if (seg.highlight === "none") return <span key={i}>{seg.text}</span>;
+        const isRed = seg.highlight === "red";
         return (
-          <div
-            key={bi}
-            onClick={() => isClickable && onSelectBlock?.(isSelected ? null : bi)}
-            className={`
-              relative rounded-lg transition-all duration-200
-              ${block.type === "paragraph" ? "pl-3 py-1" : "py-1"}
-              ${isClickable ? "cursor-pointer hover:bg-white/[0.04]" : ""}
-              ${isSelected ? "bg-white/[0.06] ring-1 ring-white/10" : ""}
-              ${worstHighlight === "red" ? "border-l-[3px] border-l-red-500" :
-                worstHighlight === "yellow" ? "border-l-[3px] border-l-yellow-500" :
-                "border-l-[3px] border-l-transparent"}
-            `}
-          >
-            {/* Block content with inline sentence highlights */}
-            {block.type !== "paragraph" ? (
-              <div className={typeStyle}>{block.text}</div>
-            ) : (
-              <p className={typeStyle}>
-                {blockSents.length > 0 ? (
-                  blockSents.map((s, si) => (
-                    <span
-                      key={si}
-                      className={`
-                        transition-all duration-200 rounded-sm px-0.5
-                        ${s.highlight === "red" ? "bg-red-500/20 text-red-200" :
-                          s.highlight === "yellow" ? "bg-yellow-500/15 text-yellow-200" :
-                          "text-slate-300"}
-                      `}
-                      title={s.highlight !== "none" ? `AI probability: ${s.ai_probability}%` : undefined}
-                    >
-                      {s.text}{" "}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-slate-300">{block.text}</span>
-                )}
-              </p>
-            )}
-
-            {/* Inline score badge on hover/click for flagged blocks */}
-            {isClickable && isSelected && (
-              <div className="mt-2 flex items-center gap-3 animate-fade-in">
-                {blockSents.filter(s => s.highlight === "red").length > 0 && (
-                  <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-red-500/15 text-red-300 border border-red-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    {blockSents.filter(s => s.highlight === "red").length} likely AI
-                  </span>
-                )}
-                {blockSents.filter(s => s.highlight === "yellow").length > 0 && (
-                  <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                    {blockSents.filter(s => s.highlight === "yellow").length} suspicious
-                  </span>
-                )}
-                <span className="text-[10px] text-slate-500">
-                  avg {Math.round(blockSents.reduce((sum, s) => sum + s.ai_probability, 0) / blockSents.length)}% AI
-                </span>
-              </div>
-            )}
-
-            {/* Hover hint for clickable blocks */}
-            {isClickable && !isSelected && (
-              <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-slate-500">
-                Click to analyze
-              </div>
-            )}
-          </div>
+          <span key={i} style={{
+            backgroundColor: isRed ? "rgba(239,68,68,0.22)" : "rgba(234,179,8,0.18)",
+            color: isRed ? "#fecaca" : "#fef08a",
+            padding: "1px 3px",
+            borderRadius: "3px",
+            borderBottom: `2px solid ${isRed ? "#ef4444" : "#eab308"}`,
+          }} title={`AI: ${seg.pct}%`}>
+            {seg.text}
+          </span>
         );
       })}
     </div>
@@ -173,6 +120,7 @@ interface AnalysisResult {
   summary: string;
   sentences: Sentence[];
   indicators: string[];
+  feedback?: string[];
 }
 interface ContentBlock {
   type: "heading1" | "heading2" | "heading3" | "paragraph";
@@ -241,6 +189,9 @@ function HomeContent() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  // Paywall modal
+  const [showPaywall, setShowPaywall] = useState<null | "scan" | "humanize" | "rewrite">(null);
 
   // PDF Preview
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -379,7 +330,8 @@ function HomeContent() {
   }
 
   async function handleHumanize() {
-    if (!hInput.trim() || hLoading || !canH) return;
+    if (!hInput.trim() || hLoading) return;
+    if (!canH) { setShowPaywall("humanize"); return; }
     setHLoading(true); setError(""); setHOutput("");
     const result = await doHumanize(hInput);
     if (result) {
@@ -394,7 +346,8 @@ function HomeContent() {
 
   // ─── Rewrite ──────────────────────────────────────────
   async function handleRewrite() {
-    if (!rwInput.trim() || rwLoading || !canRw) return;
+    if (!rwInput.trim() || rwLoading) return;
+    if (!canRw) { setShowPaywall("rewrite"); return; }
     setRwLoading(true); setError(""); setRwOutput("");
     try {
       const res = await fetch("/api/rewrite", {
@@ -428,7 +381,8 @@ function HomeContent() {
   }
 
   async function handleAnalyze() {
-    if (!dInput.trim() || dLoading || !canD) return;
+    if (!dInput.trim() || dLoading) return;
+    if (!canD) { setShowPaywall("scan"); return; }
     setDLoading(true); setError(""); setDResult(null); setSelectedBlock(null);
     // Scroll to results area
     setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
@@ -578,20 +532,32 @@ function HomeContent() {
             {/* Auth */}
             {user ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                {!isPro && (
+                  <span className="text-xs text-slate-500">
+                    {dLeft} scans left
+                  </span>
+                )}
+                <Link href="/account" className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
                   {user.tier.toUpperCase()}
-                </span>
+                </Link>
                 <button onClick={handleLogout} className="text-xs text-slate-500 hover:text-white transition-colors">
                   Logout
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => setShowLogin(true)}
-                className="text-xs px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
-              >
-                Sign In
-              </button>
+              <div className="flex items-center gap-2">
+                {!isPro && (
+                  <span className="text-xs text-slate-500 hidden sm:inline">
+                    {dLeft} free scans left
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                >
+                  Sign In
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -638,6 +604,57 @@ function HomeContent() {
         </div>
       )}
 
+      {/* ─── Paywall Modal ──────────────────────────────── */}
+      {showPaywall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#14141f] border border-white/10 rounded-2xl p-6 w-full max-w-md mx-4 animate-scale-in">
+            <div className="text-center">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <span className="text-2xl">🔒</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-1">
+                {showPaywall === "scan" ? "Free scans used up" : showPaywall === "humanize" ? "Free humanizations used up" : "Free rewrites used up"}
+              </h3>
+              <p className="text-sm text-slate-400 mb-1">
+                You&apos;ve reached your daily free limit of{" "}
+                {showPaywall === "scan" ? `${FREE_SCAN_LIMIT} AI scans` : `${FREE_HUMANIZE_LIMIT} ${showPaywall === "humanize" ? "humanizations" : "rewrites}"}`}.
+              </p>
+              <p className="text-sm text-slate-400 mb-6">
+                Upgrade for more {showPaywall === "scan" ? "scans" : showPaywall === "humanize" ? "humanizations" : "rewrites"} per day.
+              </p>
+            </div>
+            {/* Plan cards */}
+            <div className="space-y-2 mb-4">
+              {[
+                { name: "Basic", price: "$9.99", vid: "1524022", limit: showPaywall === "scan" ? "10 scans/day" : "30/day" },
+                { name: "Pro", price: "$19.99", vid: "1524636", limit: showPaywall === "scan" ? "50 scans/day" : "100/day" },
+              ].map(plan => (
+                <button
+                  key={plan.name}
+                  onClick={() => { setShowPaywall(null); handleCheckout(plan.vid); }}
+                  disabled={checkoutLoading}
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 hover:bg-white/5 transition-all text-left disabled:opacity-50"
+                >
+                  <div>
+                    <span className="text-sm font-medium">{plan.name}</span>
+                    <span className="text-xs text-slate-500 ml-2">{plan.limit}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-amber-400">{plan.price}<span className="text-xs text-slate-500">/mo</span></span>
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowPaywall(null)} className="flex-1 py-2.5 rounded-xl border border-white/10 text-sm hover:bg-white/5 transition-all">
+                Maybe later
+              </button>
+              <button onClick={() => { setShowPaywall(null); document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }); }} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-medium hover:from-amber-400 hover:to-orange-400 transition-all">
+                See all plans
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── Main Content ──────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* ─── Hero (only if no content yet) ────────────── */}
@@ -651,6 +668,9 @@ function HomeContent() {
             </p>
           </div>
         )}
+
+        {/* ─── Marketing Content (only if no content yet) ── */}
+        {!dResult && !hOutput && !rwOutput && <Marketing />}
 
         {/* ─── Mobile Tab Switch ───────────────────────── */}
         <div className="sm:hidden flex mb-4 rounded-xl bg-white/5 p-0.5 border border-white/10">
@@ -784,111 +804,114 @@ function HomeContent() {
                           </div>
                         </div>
                       ) : dResult ? (
-                        <ParagraphHighlight
-                          text={dInput}
+                        <HighlightedText
+                          originalText={dInput}
                           sentences={dResult.sentences}
-                          blocks={contentBlocks}
-                          selectedBlock={selectedBlock}
-                          onSelectBlock={setSelectedBlock}
                         />
                       ) : null}
                     </div>
                   </div>
                 </div>
 
-                {/* Score & Analysis Section (below the document view) */}
-                <div className="mt-6 grid lg:grid-cols-3 gap-4">
+                {/* Bento Grid: Score + Analysis + Patterns + Feedback */}
+                <div className="mt-6 space-y-4">
                   {dLoading ? (
-                    <>
-                      {/* AI Score skeleton */}
-                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 text-center animate-pulse">
-                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">AI Score</div>
-                        <div className="h-12 w-24 bg-slate-800 rounded mx-auto mb-3" />
-                        <div className="h-2 bg-slate-800 rounded-full mb-2" />
-                        <div className="h-4 w-20 bg-slate-800 rounded mx-auto" />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 animate-pulse">
+                        <div className="h-10 w-16 bg-slate-800 rounded mx-auto mb-2" />
+                        <div className="h-2 bg-slate-800 rounded-full" />
                       </div>
-                      {/* Analysis skeleton */}
-                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 animate-pulse">
-                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Analysis</div>
-                        <div className="h-4 bg-slate-800 rounded w-full mb-2" />
-                        <div className="h-4 bg-slate-800 rounded w-3/4 mb-2" />
-                        <div className="h-4 bg-slate-800 rounded w-1/2" />
-                      </div>
-                      {/* Suggestions skeleton */}
-                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 animate-pulse">
-                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Suggestions</div>
+                      <div className="lg:col-span-2 bg-white/[0.02] border border-white/10 rounded-2xl p-5 animate-pulse">
                         <div className="h-3 bg-slate-800 rounded w-full mb-2" />
-                        <div className="h-3 bg-slate-800 rounded w-5/6 mb-2" />
-                        <div className="h-3 bg-slate-800 rounded w-4/5 mb-2" />
                         <div className="h-3 bg-slate-800 rounded w-3/4" />
                       </div>
-                    </>
+                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 animate-pulse">
+                        <div className="h-3 bg-slate-800 rounded w-full mb-2" />
+                        <div className="h-3 bg-slate-800 rounded w-5/6" />
+                      </div>
+                      <div className="lg:col-span-2 bg-white/[0.02] border border-white/10 rounded-2xl p-5 animate-pulse">
+                        <div className="h-3 bg-slate-800 rounded w-full mb-2" />
+                        <div className="h-3 bg-slate-800 rounded w-4/5" />
+                      </div>
+                    </div>
                   ) : dResult && (
-                    <>
-                    {/* AI Score Card */}
-                    <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 text-center">
-                    <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">AI Score</div>
-                    <div className={`text-5xl font-bold ${scoreColor(dResult.overall_score)} transition-colors duration-500`}>
-                      {dResult.overall_score}%
-                    </div>
-                    <div className="mt-3 h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full bg-gradient-to-r ${scoreBg(dResult.overall_score)} rounded-full transition-all duration-1000`}
-                        style={{ width: `${dResult.overall_score}%` }}
-                      />
-                    </div>
-                    <div className={`text-sm mt-2 font-medium ${scoreColor(dResult.overall_score)}`}>{scoreLabel(dResult.overall_score)}</div>
-                    <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-slate-500">
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-500/50" /> {dResult.sentences.filter(s => s.highlight === "red").length} flagged</span>
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-yellow-500/50" /> {dResult.sentences.filter(s => s.highlight === "yellow").length} suspicious</span>
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-emerald-500/50" /> {dResult.sentences.filter(s => s.highlight === "none").length} clean</span>
-                    </div>
-                  </div>
-
-                  {/* Analysis Summary */}
-                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                    <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Analysis</div>
-                    <p className="text-sm text-slate-300 leading-relaxed">{dResult.summary}</p>
-                    {dResult.indicators.length > 0 && (
-                      <div className="mt-4">
-                        <div className="text-[10px] uppercase tracking-widest text-red-400/60 mb-2">Detected AI Patterns</div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {dResult.indicators.map((ind, i) => (
-                            <span key={i} className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
-                              {ind}
-                            </span>
-                          ))}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      {/* Row 1: AI Score + Analysis */}
+                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 text-center">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">AI Score</div>
+                        <div className={`text-4xl font-bold ${scoreColor(dResult.overall_score)}`}>
+                          {dResult.overall_score}%
+                        </div>
+                        <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full bg-gradient-to-r ${scoreBg(dResult.overall_score)} rounded-full transition-all duration-1000`}
+                            style={{ width: `${dResult.overall_score}%` }}
+                          />
+                        </div>
+                        <div className={`text-xs mt-1.5 font-medium ${scoreColor(dResult.overall_score)}`}>{scoreLabel(dResult.overall_score)}</div>
+                        <div className="flex items-center justify-center gap-3 mt-2 text-[10px] text-slate-500">
+                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded bg-red-500/50" /> {dResult.sentences.filter(s => s.highlight === "red").length} flagged</span>
+                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded bg-yellow-500/50" /> {dResult.sentences.filter(s => s.highlight === "yellow").length} sus</span>
                         </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Suggestions */}
-                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                    <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Suggestions</div>
-                    {dResult.overall_score >= 70 ? (
-                      <div className="space-y-2 text-sm text-slate-400">
-                        <p>• Vary sentence length — mix short and long sentences naturally</p>
-                        <p>• Add personal anecdotes or specific examples</p>
-                        <p>• Remove formulaic transitions like "Furthermore" or "In conclusion"</p>
-                        <p>• Use contractions and informal connectors</p>
-                        <p className="text-slate-500 text-xs mt-3">Use the <span className="text-emerald-400">Humanizer</span> or <span className="text-violet-400">Rewrite</span> tabs to fix flagged text.</p>
+                      <div className="lg:col-span-2 bg-white/[0.02] border border-white/10 rounded-2xl p-5">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Analysis</div>
+                        <p className="text-sm text-slate-300 leading-relaxed">{dResult.summary}</p>
                       </div>
-                    ) : dResult.overall_score >= 30 ? (
-                      <div className="space-y-2 text-sm text-slate-400">
-                        <p>• Some sections show AI patterns — check yellow-highlighted areas</p>
-                        <p>• Consider adding more specific details or unique phrasing</p>
-                        <p>• Read aloud to check for natural flow</p>
+
+                      {/* Row 2: Detected AI Patterns + How to Improve */}
+                      <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5">
+                        <div className="text-[10px] uppercase tracking-widest text-red-400/60 mb-3">Detected AI Patterns</div>
+                        <div className="space-y-2">
+                          {dResult.indicators.length > 0 ? (
+                            dResult.indicators.map((ind, i) => (
+                              <div key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                                <span className="text-red-400/60 mt-0.5 shrink-0">•</span>
+                                <span>{ind}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-xs text-slate-500">No specific patterns detected</p>
+                          )}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="space-y-2 text-sm text-slate-400">
-                        <p>• Text appears naturally written ✓</p>
-                        <p>• No significant AI patterns detected</p>
-                        <p>• Good variety in sentence structure</p>
+
+                      <div className="lg:col-span-2 bg-white/[0.02] border border-white/10 rounded-2xl p-5">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">How to Improve</div>
+                        <div className="space-y-2 text-xs text-slate-400">
+                          {(dResult.feedback && dResult.feedback.length > 0) ? (
+                            dResult.feedback.map((fb, i) => (
+                              <div key={i} className="flex items-start gap-2">
+                                <span className="text-emerald-400 mt-0.5 shrink-0">→</span>
+                                <span>{fb}</span>
+                              </div>
+                            ))
+                          ) : dResult.overall_score >= 70 ? (
+                            <>
+                              <div className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">→</span><span>Vary sentence length — mix short punchy sentences with longer ones</span></div>
+                              <div className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">→</span><span>Add specific examples, numbers, or personal anecdotes</span></div>
+                              <div className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">→</span><span>Remove formulaic transitions like "Furthermore" or "In conclusion"</span></div>
+                            </>
+                          ) : dResult.overall_score >= 30 ? (
+                            <>
+                              <div className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">→</span><span>Check yellow-highlighted areas for AI patterns</span></div>
+                              <div className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">→</span><span>Add more specific details or unique phrasing</span></div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">✓</span><span>Text appears naturally written</span></div>
+                              <div className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">✓</span><span>No significant AI patterns detected</span></div>
+                            </>
+                          )}
+                        </div>
+                        {dResult.overall_score >= 30 && (
+                          <p className="text-slate-500 text-[10px] mt-3 pt-2 border-t border-white/5">
+                            Try <span className="text-emerald-400">Humanizer</span> or <span className="text-violet-400">Rewrite</span> to fix flagged text.
+                          </p>
+                        )}
                       </div>
-                    )}
-                  </div>
-                    </>
+                    </div>
                   )}
                 </div>
 
