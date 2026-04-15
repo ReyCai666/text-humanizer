@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import ScrollReveal from "./ScrollReveal";
 
 // ─── Data ──────────────────────────────────────────────────
 const UNIVERSITIES = [
@@ -67,28 +68,24 @@ const FEATURES = [
     icon: "🎯",
     title: "Beat Turnitin & GPTZero",
     desc: "Our AI detector catches what your school's system catches — then we fix it. 99.2% pass rate across all major detectors.",
-    gradient: "from-blue-500 to-indigo-600",
     bg: "bg-blue-500/10",
   },
   {
     icon: "🧠",
     title: "Sounds Like You",
     desc: "Our neural network doesn't just swap synonyms — it rewrites to match YOUR voice. Professors can't tell the difference.",
-    gradient: "from-purple-500 to-pink-600",
     bg: "bg-purple-500/10",
   },
   {
     icon: "✅",
     title: "Pass Every Check",
     desc: "Turnitin, GPTZero, Originality.ai, Copyleaks, Sapling — if your school uses it, we beat it. Guaranteed.",
-    gradient: "from-emerald-500 to-cyan-600",
     bg: "bg-emerald-500/10",
   },
   {
     icon: "📝",
     title: "Keep Your Style",
     desc: "Adjust tone, formality, and perspective. Your essay sounds like you wrote it — because it basically is you, just enhanced.",
-    gradient: "from-amber-500 to-orange-600",
     bg: "bg-amber-500/10",
   },
 ];
@@ -100,12 +97,12 @@ const DETECTORS = [
 
 // ─── Scroll Logo Ticker ────────────────────────────────────
 function LogoTicker() {
-  const doubled = [...UNIVERSITIES, ...UNIVERSITIES, ...UNIVERSITIES];
+  const tripled = [...UNIVERSITIES, ...UNIVERSITIES, ...UNIVERSITIES];
 
   return (
     <div className="overflow-hidden relative">
       <div className="flex items-center gap-16 animate-scroll-left" style={{ animationDuration: "35s" }}>
-        {doubled.map((u, i) => (
+        {tripled.map((u, i) => (
           <div key={i} className="shrink-0 h-10 w-28 relative opacity-40 hover:opacity-70 transition-opacity">
             <Image
               src={u.logo}
@@ -158,112 +155,134 @@ function ReviewCard({ r }: { r: typeof TESTIMONIALS_ROW1[0] }) {
 // ─── Main Component ────────────────────────────────────────
 export default function Marketing() {
   return (
-    <div className="space-y-16 mt-16">
-      {/* ── Features ───────────────────────────────────── */}
-      <section className="animate-fade-up">
-        <div className="text-center mb-8">
-          <p className="text-xs font-medium text-emerald-400 tracking-widest uppercase mb-2">
-            Built for Students
-          </p>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
-            Your Secret Weapon for{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-              AI-Proof Essays
-            </span>
-          </h2>
-          <p className="text-slate-400 text-sm max-w-xl mx-auto">
-            Schools use AI detectors. We make sure you pass them — while keeping your writing authentic and your grades safe.
-          </p>
-        </div>
+    <div className="mt-20 space-y-28">
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* FEATURES                                          */}
+      {/* ═══════════════════════════════════════════════════ */}
+      <section>
+        <ScrollReveal>
+          <div className="text-center mb-10">
+            <p className="text-xs font-medium text-emerald-400 tracking-widest uppercase mb-3">
+              Built for Students
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-4">
+              Your Secret Weapon for{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                AI-Proof Essays
+              </span>
+            </h2>
+            <p className="text-slate-400 text-sm max-w-xl mx-auto leading-relaxed">
+              Schools use AI detectors. We make sure you pass them — while keeping your writing authentic and your grades safe.
+            </p>
+          </div>
+        </ScrollReveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {FEATURES.map((f, i) => (
-            <div
-              key={i}
-              className="group relative bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 hover:border-white/10 transition-all duration-300 hover:bg-white/[0.04]"
-            >
-              <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center text-lg mb-4`}>
-                {f.icon}
+            <ScrollReveal key={i} delay={i * 100} direction="up">
+              <div className="group relative bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 hover:border-white/10 transition-all duration-300 hover:bg-white/[0.04] h-full">
+                <div className={`w-11 h-11 rounded-xl ${f.bg} flex items-center justify-center text-lg mb-4`}>
+                  {f.icon}
+                </div>
+                <h3 className="text-sm font-semibold text-white mb-2">{f.title}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{f.desc}</p>
               </div>
-              <h3 className="text-sm font-semibold text-white mb-2">{f.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">{f.desc}</p>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
 
-        {/* Detectors bar */}
-        <div className="mt-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Beats</p>
-              <p className="text-sm text-white font-semibold">Every School&apos;s AI Detector</p>
+        <ScrollReveal delay={400}>
+          <div className="mt-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Beats</p>
+                <p className="text-sm text-white font-semibold">Every School&apos;s AI Detector</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {DETECTORS.map((d, i) => (
+                  <span key={i} className="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-400">
+                    {d}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {DETECTORS.map((d, i) => (
-                <span key={i} className="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-400">
-                  {d}
-                </span>
+          </div>
+        </ScrollReveal>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* SOCIAL PROOF                                      */}
+      {/* ═══════════════════════════════════════════════════ */}
+      <section>
+        <ScrollReveal>
+          <div className="text-center space-y-6">
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <span className="text-lg font-bold text-white">Excellent</span>
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <span key={s} className="text-emerald-400 text-lg">★</span>
+                ))}
+              </div>
+              <span className="text-sm text-slate-400">
+                <span className="font-semibold text-white">2,412</span> reviews
+              </span>
+            </div>
+
+            <p className="text-sm text-slate-300">
+              <span className="text-emerald-400 mr-1">✓</span>
+              Trusted by Students at Top Universities Worldwide
+            </p>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={150}>
+          <div className="mt-8">
+            <LogoTicker />
+          </div>
+        </ScrollReveal>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* TESTIMONIALS                                      */}
+      {/* ═══════════════════════════════════════════════════ */}
+      <section>
+        <ScrollReveal>
+          <div className="text-center mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-3">
+              Straight-A Students{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                Swear By Us
+              </span>
+            </h2>
+            <p className="text-sm text-slate-400">Real students. Real results. No more AI flags.</p>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={100}>
+          {/* Row 1 — scrolls left */}
+          <div className="overflow-hidden relative">
+            <div className="flex gap-5 animate-scroll-left" style={{ animationDuration: "40s" }}>
+              {[...TESTIMONIALS_ROW1, ...TESTIMONIALS_ROW1, ...TESTIMONIALS_ROW1].map((r, i) => (
+                <ReviewCard key={`r1-${i}`} r={r} />
               ))}
             </div>
+            <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none z-10" />
+            <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none z-10" />
           </div>
-        </div>
-      </section>
+        </ScrollReveal>
 
-      {/* ── Social Proof ───────────────────────────────── */}
-      <section className="text-center space-y-6">
-        <div className="flex items-center justify-center gap-3 flex-wrap">
-          <span className="text-lg font-bold text-white">Excellent</span>
-          <div className="flex gap-0.5">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <span key={s} className="text-emerald-400 text-lg">★</span>
-            ))}
+        <ScrollReveal delay={200}>
+          {/* Row 2 — scrolls right */}
+          <div className="mt-6 overflow-hidden relative">
+            <div className="flex gap-5 animate-scroll-right" style={{ animationDuration: "35s" }}>
+              {[...TESTIMONIALS_ROW2, ...TESTIMONIALS_ROW2, ...TESTIMONIALS_ROW2].map((r, i) => (
+                <ReviewCard key={`r2-${i}`} r={r} />
+              ))}
+            </div>
+            <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none z-10" />
+            <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none z-10" />
           </div>
-          <span className="text-sm text-slate-400">
-            <span className="font-semibold text-white">2,412</span> reviews
-          </span>
-        </div>
-
-        <p className="text-sm text-slate-300">
-          <span className="text-emerald-400 mr-1">✓</span>
-          Trusted by Students at Top Universities Worldwide
-        </p>
-
-        <LogoTicker />
-      </section>
-
-      {/* ── Testimonials (two rows, opposite directions) ── */}
-      <section>
-        <div className="text-center mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">
-            Straight-A Students{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
-              Swear By Us
-            </span>
-          </h2>
-          <p className="text-sm text-slate-400">Real students. Real results. No more AI flags.</p>
-        </div>
-
-        {/* Row 1 — scrolls left */}
-        <div className="overflow-hidden relative">
-          <div className="flex gap-5 animate-scroll-left" style={{ animationDuration: "40s" }}>
-            {[...TESTIMONIALS_ROW1, ...TESTIMONIALS_ROW1, ...TESTIMONIALS_ROW1].map((r, i) => (
-              <ReviewCard key={`r1-${i}`} r={r} />
-            ))}
-          </div>
-          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none z-10" />
-        </div>
-
-        {/* Row 2 — scrolls right */}
-        <div className="mt-5 overflow-hidden relative">
-          <div className="flex gap-5 animate-scroll-right" style={{ animationDuration: "35s" }}>
-            {[...TESTIMONIALS_ROW2, ...TESTIMONIALS_ROW2, ...TESTIMONIALS_ROW2].map((r, i) => (
-              <ReviewCard key={`r2-${i}`} r={r} />
-            ))}
-          </div>
-          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none z-10" />
-        </div>
+        </ScrollReveal>
       </section>
     </div>
   );
