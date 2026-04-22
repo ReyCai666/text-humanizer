@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "AI Detector — Free AI Content Detection Tool | Check AI Writing",
   description:
-    "Free AI detector with sentence-level scoring. Check if text was written by ChatGPT, Claude, or other AI tools. Color-coded highlights show exactly which sentences are flagged.",
+    "Free AI detector with sentence-level scoring. Check if text is written by ChatGPT, Claude, or Gemini. Color-coded highlights. No sign-up.",
   keywords: [
     "ai detector",
     "ai content detector",
@@ -20,10 +20,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AI Detector — Free AI Content Detection Tool",
     description: "Check if text was written by AI with sentence-level scoring and color-coded highlights.",
-    url: "https://text-humanizer-theta.vercel.app/ai-detector",
+    url: "https://eigentexthumanizer.com/ai-detector",
     type: "article",
   },
-  alternates: { canonical: "https://text-humanizer-theta.vercel.app/ai-detector" },
+  alternates: { canonical: "https://eigentexthumanizer.com/ai-detector" },
 };
 
 export default function AIDetectorPage() {
@@ -99,14 +99,14 @@ export default function AIDetectorPage() {
       </section>
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        "@context": "https://schema.org", "@type": "WebApplication", name: "HumanizeAI AI Detector",
+        "@context": "https://schema.org", "@type": "WebApplication", name: "EIGEN AI Detector",
         description: "Free AI content detector with sentence-level scoring and color-coded highlights.",
-        url: "https://text-humanizer-theta.vercel.app/ai-detector",
+        url: "https://eigentexthumanizer.com/ai-detector",
         applicationCategory: "UtilityApplication", operatingSystem: "Web",
         offers: { "@type": "Offer", price: "0", priceCurrency: "AUD" },
       }) }} />
 
-      <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">© 2026 HumanizeAI</footer>
+      <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">© 2026 EIGEN</footer>
     </main>
   );
 }

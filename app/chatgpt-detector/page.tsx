@@ -4,10 +4,10 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "ChatGPT Detector — Free Tool to Detect ChatGPT Written Text",
   description:
-    "Free ChatGPT detector with sentence-level analysis. Check if text was written by ChatGPT, GPT-4, or GPT-4o. Color-coded highlights show exactly which sentences are AI-generated.",
+    "Free ChatGPT detector with sentence-level analysis. Detect ChatGPT, GPT-4, and GPT-4o text. Color-coded highlights. No sign-up needed.",
   keywords: ["chatgpt detector", "detect chatgpt", "chatgpt text detector", "gpt-4 detector", "gpt detector", "is this chatgpt", "chatgpt checker", "openai detector"],
-  openGraph: { title: "ChatGPT Detector — Free Tool to Detect ChatGPT Text", description: "Check if text was written by ChatGPT with sentence-level analysis.", url: "https://text-humanizer-theta.vercel.app/chatgpt-detector", type: "article" },
-  alternates: { canonical: "https://text-humanizer-theta.vercel.app/chatgpt-detector" },
+  openGraph: { title: "ChatGPT Detector — Free Tool to Detect ChatGPT Text", description: "Check if text was written by ChatGPT with sentence-level analysis.", url: "https://eigentexthumanizer.com/chatgpt-detector", type: "article" },
+  alternates: { canonical: "https://eigentexthumanizer.com/chatgpt-detector" },
 };
 
 export default function ChatGPTDetectorPage() {
@@ -78,7 +78,7 @@ export default function ChatGPTDetectorPage() {
         ],
       }) }} />
 
-      <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">© 2026 HumanizeAI</footer>
+      <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">© 2026 EIGEN</footer>
     </main>
   );
 }

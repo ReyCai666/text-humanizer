@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "AI to Human Text Converter — Free Online Tool | HumanizeAI",
+  title: "AI to Human Text Converter — Free Online Tool | EIGEN",
   description:
-    "Convert AI-generated text to human writing instantly. Free online tool that transforms ChatGPT, Claude, and Gemini output into natural, readable content. No sign-up required.",
+    "Convert AI-generated text to human writing instantly. Transforms ChatGPT, Claude & Gemini output into natural, readable content. No sign-up.",
   keywords: ["ai to human text", "ai to human text converter", "convert ai text to human", "ai text converter", "ai writing to human writing", "machine text to human text"],
-  openGraph: { title: "AI to Human Text Converter — Free Online Tool", description: "Convert AI text to natural human writing instantly. Free, no sign-up.", url: "https://text-humanizer-theta.vercel.app/ai-to-human-text", type: "article" },
-  alternates: { canonical: "https://text-humanizer-theta.vercel.app/ai-to-human-text" },
+  openGraph: { title: "AI to Human Text Converter — Free Online Tool", description: "Convert AI text to natural human writing instantly. Free, no sign-up.", url: "https://eigentexthumanizer.com/ai-to-human-text", type: "article" },
+  alternates: { canonical: "https://eigentexthumanizer.com/ai-to-human-text" },
 };
 
 export default function AIToHumanPage() {
@@ -88,7 +88,7 @@ export default function AIToHumanPage() {
         </Link>
       </section>
 
-      <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">© 2026 HumanizeAI</footer>
+      <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">© 2026 EIGEN</footer>
     </main>
   );
 }

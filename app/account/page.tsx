@@ -152,7 +152,7 @@ export default function AccountPage() {
       <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-400 mb-4">Please sign in to view your account.</p>
-          <Link href="/" className="text-sm text-amber-400 hover:underline">Go to HumanizeAI →</Link>
+          <Link href="/" className="text-sm text-amber-400 hover:underline">Go to EIGEN →</Link>
         </div>
       </div>
     );
@@ -163,8 +163,8 @@ export default function AccountPage() {
       <header className="border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <img src="/logo.svg" alt="HumanizeAI" className="w-7 h-7" />
-            <span className="font-semibold text-sm tracking-tight">HumanizeAI</span>
+            <img src="/logo.svg" alt="EIGEN AI" className="w-7 h-7" />
+            <span className="font-semibold text-sm tracking-tight">EIGEN AI</span>
           </Link>
           <Link href="/" className="text-xs text-slate-400 hover:text-white transition-colors">← Back to tool</Link>
         </div>

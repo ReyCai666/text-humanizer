@@ -77,7 +77,7 @@ function HighlightedText({
 }
 
 const TIER_LIMITS: Record<string, { humanize: number; scan: number; rewrite: number; words: number }> = {
-  free:   { humanize: 3,   scan: 3,   rewrite: 3,   words: 3000 },
+  free:   { humanize: 3,   scan: 3,   rewrite: 3,   words: 1000 },
   basic:  { humanize: 30,  scan: 10,  rewrite: 30,  words: 8000 },
   pro:    { humanize: 100, scan: 50,  rewrite: 100, words: 15000 },
   max:    { humanize: 9999,scan: 300, rewrite: 9999, words: 30000 },
@@ -500,8 +500,8 @@ function HomeContent() {
       <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/logo.svg" alt="HumanizeAI" className="w-7 h-7" />
-            <span className="font-semibold text-sm tracking-tight">HumanizeAI</span>
+            <img src="/logo.svg" alt="EIGEN AI" className="w-7 h-7" />
+            <span className="font-semibold text-sm tracking-tight">EIGEN AI</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -541,11 +541,9 @@ function HomeContent() {
                     {dLeft} scans left
                   </span>
                 )}
-                {!isPro && (
-                  <Link href="/pricing" className="text-xs px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-300 hover:from-amber-500/20 hover:to-orange-500/20 transition-all font-medium">
-                    ⚡ Upgrade
-                  </Link>
-                )}
+                <Link href="/pricing" className="text-xs px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-300 hover:from-amber-500/20 hover:to-orange-500/20 transition-all font-medium">
+                  Pricing
+                </Link>
                 <Link href="/account" className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
                   {user.tier.toUpperCase()}
                 </Link>
@@ -608,9 +606,9 @@ function HomeContent() {
             </div>
             <p className="text-xs text-slate-500 mt-3 text-center">
               Don&apos;t have an account?{" "}
-              <button onClick={() => { setShowLogin(false); document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }); }} className="text-emerald-400 hover:underline">
+              <Link href="/pricing" onClick={() => setShowLogin(false)} className="text-emerald-400 hover:underline">
                 Get started
-              </button>
+              </Link>
             </p>
           </div>
         </div>
@@ -638,8 +636,8 @@ function HomeContent() {
             {/* Plan cards */}
             <div className="space-y-2 mb-4">
               {[
-                { name: "Basic", price: "$9.99", vid: "1524022", limit: showPaywall === "scan" ? "10 scans/day" : showPaywall === "humanize" ? "30 humanizations/day" : "30 rewrites/day" },
-                { name: "Pro", price: "$19.99", vid: "1524636", limit: showPaywall === "scan" ? "50 scans/day" : showPaywall === "humanize" ? "100 humanizations/day" : "100 rewrites/day" },
+                { name: "Basic", price: "$9.99", vid: "1553040", limit: showPaywall === "scan" ? "10 scans/day" : showPaywall === "humanize" ? "30 humanizations/day" : "30 rewrites/day" },
+                { name: "Pro", price: "$19.99", vid: "1553066", limit: showPaywall === "scan" ? "50 scans/day" : showPaywall === "humanize" ? "100 humanizations/day" : "100 rewrites/day" },
               ].map(plan => (
                 <button
                   key={plan.name}
@@ -659,9 +657,9 @@ function HomeContent() {
               <button onClick={() => setShowPaywall(null)} className="flex-1 py-2.5 rounded-xl border border-white/10 text-sm hover:bg-white/5 transition-all">
                 Maybe later
               </button>
-              <button onClick={() => { setShowPaywall(null); document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }); }} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-medium hover:from-amber-400 hover:to-orange-400 transition-all">
+              <Link href="/pricing" onClick={() => setShowPaywall(null)} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-medium hover:from-amber-400 hover:to-orange-400 transition-all text-center">
                 See all plans
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -673,10 +671,10 @@ function HomeContent() {
         {!dResult && !hOutput && !rwOutput && (
           <div className="text-center mb-8 animate-fade-up">
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
-              Detect AI. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Fix AI.</span> Pass checks.
+              Write with AI. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Submit with confidence.</span>
             </h1>
             <p className="text-slate-400 text-sm max-w-lg mx-auto">
-              Paste text or upload a file. Get instant AI detection scores with sentence-level highlights, one-click rewriting, and tone/perspective tools.
+              See exactly what gets flagged. Fix it in one click. Pass every detector — Turnitin, GPTZero, Copyleaks, and more.
             </p>
           </div>
         )}
@@ -1167,70 +1165,6 @@ function HomeContent() {
         {/* ═══════════════════════════════════════════════ */}
         {!dResult && !hOutput && !rwOutput && <Marketing />}
 
-        {/* ═══════════════════════════════════════════════ */}
-        {/* PRICING                                         */}
-        {/* ═══════════════════════════════════════════════ */}
-        {!isPro && (
-          <div id="pricing" className="mt-16 max-w-4xl mx-auto">
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-bold">Choose your plan</h2>
-              <p className="text-sm text-slate-400 mt-1">Start free, upgrade when you need more.</p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { name: "Free", price: "Free", vid: null, perDay: "", features: ["3 scans/day", "3 humanizations/day", "3 rewrites/day", "3,000 chars/input"], popular: false },
-                { name: "Basic", price: "$9.99", vid: "1524022", perDay: "$0.32/day", features: ["10 scans/day", "30 humanizations/day", "30 rewrites/day", "8,000 chars/input", "File upload"], popular: false },
-                { name: "Pro", price: "$19.99", vid: "1524636", perDay: "$0.65/day", features: ["50 scans/day", "100 humanizations/day", "100 rewrites/day", "15,000 chars/input", "Sentence rewrite", "File upload"], popular: true },
-                { name: "Max", price: "$39.99", vid: "1524640", perDay: "$1.29/day", features: ["300 scans/day", "Unlimited humanizations", "Unlimited rewrites", "30,000 chars/input", "Priority (2× speed)", "File upload"], popular: false },
-              ].map((plan) => (
-                <div key={plan.name} className={`relative p-5 rounded-2xl border transition-all duration-300 hover:translate-y-[-2px] ${
-                  plan.popular ? "bg-amber-500/5 border-amber-500/20" : "bg-white/[0.02] border-white/5 hover:border-white/10"
-                }`}>
-                  {plan.popular && (
-                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-[10px] font-semibold">
-                      Popular
-                    </div>
-                  )}
-                  <div className="text-sm font-semibold mb-1">{plan.name}</div>
-                  <div className="text-2xl font-bold mb-0.5">
-                    {plan.price === "Free" ? "Free" : plan.price}
-                    {plan.price !== "Free" && <span className="text-xs font-normal text-slate-500"> AUD/mo</span>}
-                  </div>
-                  {plan.perDay && (
-                    <div className="text-[10px] text-emerald-400/80 mb-3 font-medium">{plan.perDay} — less than a coffee ☕</div>
-                  )}
-                  {plan.price === "Free" && <div className="text-[10px] text-slate-600 mb-3">No credit card needed</div>}
-                  <ul className="space-y-1.5 mb-4">
-                    {plan.features.map((f, i) => (
-                      <li key={i} className="text-xs text-slate-400 flex items-center gap-1.5">
-                        <span className="text-emerald-400">✓</span> {f}
-                      </li>
-                    ))}
-                  </ul>
-                  {plan.vid ? (
-                    <button
-                      onClick={() => handleCheckout(plan.vid)}
-                      disabled={checkoutLoading}
-                      className={`w-full py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                        plan.popular
-                          ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white"
-                          : "border border-white/10 hover:bg-white/5"
-                      } disabled:opacity-50`}
-                    >
-                      Get {plan.name}
-                    </button>
-                  ) : (
-                    <div className="w-full py-2 rounded-xl text-sm font-medium text-center border border-white/5 text-slate-500">
-                      You&apos;re on this plan
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <p className="text-center text-[10px] text-slate-600 mt-4">All prices in AUD. Cancel anytime.</p>
-          </div>
-        )}
-
         {/* Usage indicator */}
         {!isPro && (
           <div className="text-center mt-8 text-xs text-slate-600">
@@ -1241,9 +1175,9 @@ function HomeContent() {
             ) : (
               <span>
                 Free limit reached.{" "}
-                <button onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })} className="text-amber-400 hover:underline">
+                <Link href="/pricing" className="text-amber-400 hover:underline">
                   Upgrade now
-                </button>
+                </Link>
               </span>
             )}
           </div>
@@ -1251,7 +1185,7 @@ function HomeContent() {
       </main>
 
       <footer className="border-t border-white/5 mt-12 py-6 text-center text-[10px] text-slate-600">
-        © 2026 HumanizeAI — Making AI text sound human.
+        © 2026 EIGEN AI — Write with AI. Submit with confidence.
       </footer>
     </div>
   );

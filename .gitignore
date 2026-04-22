@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# marketing deliverables (not source)
+EIGEN-AI-Reddit-Marketing-Playbook.docx
+
+# Word temp lock files
+~$*.docx

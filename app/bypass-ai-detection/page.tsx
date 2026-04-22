@@ -4,10 +4,10 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Bypass AI Detection — Make AI Text Undetectable | Free Tool",
   description:
-    "Bypass AI detection tools like Turnitin, GPTZero, and Originality.ai. Rewrite AI-generated text to sound naturally human. Free tool with verification scanning.",
+    "Bypass Turnitin, GPTZero & Originality.ai detection. Rewrite AI text to sound naturally human. Free tool with built-in verification scan.",
   keywords: ["bypass ai detection", "ai detection bypass", "turnitin bypass", "gptzero bypass", "undetectable ai", "avoid ai detection", "ai detection remover", "make ai text undetectable"],
-  openGraph: { title: "Bypass AI Detection — Make AI Text Undetectable", description: "Rewrite AI text to pass Turnitin, GPTZero, and Originality.ai checks.", url: "https://text-humanizer-theta.vercel.app/bypass-ai-detection", type: "article" },
-  alternates: { canonical: "https://text-humanizer-theta.vercel.app/bypass-ai-detection" },
+  openGraph: { title: "Bypass AI Detection — Make AI Text Undetectable", description: "Rewrite AI text to pass Turnitin, GPTZero, and Originality.ai checks.", url: "https://eigentexthumanizer.com/bypass-ai-detection", type: "article" },
+  alternates: { canonical: "https://eigentexthumanizer.com/bypass-ai-detection" },
 };
 
 export default function BypassPage() {
@@ -101,7 +101,7 @@ export default function BypassPage() {
         ],
       }) }} />
 
-      <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">© 2026 HumanizeAI</footer>
+      <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">© 2026 EIGEN</footer>
     </main>
   );
 }

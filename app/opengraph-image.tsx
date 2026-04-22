@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "HumanizeAI — AI Text Humanizer & Detector";
+export const alt = "EIGEN AI — AI Text Humanizer & Detector";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -34,9 +34,7 @@ export default async function OGImage() {
             alignItems: "center",
             justifyContent: "center",
           }}
-        >
-          H
-        </div>
+        >E</div>
         <div
           style={{
             display: "flex",

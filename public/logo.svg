@@ -15,8 +15,8 @@
   <rect x="48" y="48" width="416" height="416" rx="96" stroke="url(#grad)" stroke-width="4" fill="none"/>
   <!-- Inner glow accent -->
   <rect x="72" y="72" width="368" height="368" rx="72" fill="url(#grad2)"/>
-  <!-- Letter H - main mark -->
-  <path d="M176 160 L176 352 L216 352 L216 280 L296 280 L296 352 L336 352 L336 160 L296 160 L296 240 L216 240 L216 160 Z" fill="url(#grad)"/>
+  <!-- Letter E - main mark -->
+  <path d="M176 160 L176 352 L336 352 L336 312 L216 312 L216 280 L316 280 L316 240 L216 240 L216 200 L336 200 L336 160 Z" fill="url(#grad)"/>
   <!-- Scan line accent (detection indicator) -->
   <rect x="160" y="256" width="192" height="3" rx="1.5" fill="#10b981" opacity="0.6"/>
   <!-- Small dot accents -->

@@ -7,9 +7,20 @@ export async function POST(req: NextRequest) {
     if (!email) {
       return NextResponse.json({ subscribed: false });
     }
-    const subs = await loadSubscribers();
-    const isSubscribed = subs.has(email.toLowerCase());
-    return NextResponse.json({ subscribed: isSubscribed });
+    const db = await loadSubscribers();
+    const record = db[email.toLowerCase()];
+
+    if (!record) {
+      return NextResponse.json({ subscribed: false });
+    }
+
+    // Check daily pass expiry
+    if (record.expiresAt) {
+      const isExpired = new Date(record.expiresAt) <= new Date();
+      return NextResponse.json({ subscribed: !isExpired, tier: isExpired ? "free" : record.tier });
+    }
+
+    return NextResponse.json({ subscribed: true, tier: record.tier });
   } catch {
     return NextResponse.json({ subscribed: false });
   }

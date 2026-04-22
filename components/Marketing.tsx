@@ -20,14 +20,14 @@ const TESTIMONIALS_ROW1 = [
     name: "Sarah K.",
     role: "Masters Student, Oxford",
     avatar: "/avatars/avatar1.jpg",
-    text: "My professor runs everything through Turnitin. HumanizeAI is the only tool that actually passes — every single time. Saved my semester.",
+    text: "My professor runs everything through Turnitin. EIGEN is the only tool that actually passes — every single time. Saved my semester.",
     rating: 5,
   },
   {
     name: "Marcus T.",
     role: "Undergrad, NYU",
     avatar: "/avatars/avatar2.jpg",
-    text: "I use ChatGPT to brainstorm but copy-pasting straight got me flagged twice. Now I run everything through HumanizeAI first. Zero flags since.",
+    text: "I use ChatGPT to brainstorm but copy-pasting straight got me flagged twice. Now I run everything through EIGEN AI first. Zero flags since.",
     rating: 5,
   },
   {
@@ -66,26 +66,26 @@ const TESTIMONIALS_ROW2 = [
 const FEATURES = [
   {
     icon: "🎯",
-    title: "Beat Turnitin & GPTZero",
-    desc: "Our AI detector catches what your school's system catches — then we fix it. 99.2% pass rate across all major detectors.",
+    title: "Precision Detection",
+    desc: "See exactly which sentences get flagged — before your professor does. Sentence-level scoring, not vague guesses.",
     bg: "bg-blue-500/10",
+  },
+  {
+    icon: "✅",
+    title: "99.2% Pass Rate",
+    desc: "Tested against Turnitin, GPTZero, Copyleaks, Originality.ai, and more. We don't guess — we guarantee.",
+    bg: "bg-emerald-500/10",
   },
   {
     icon: "🧠",
     title: "Sounds Like You",
-    desc: "Our neural network doesn't just swap synonyms — it rewrites to match YOUR voice. Professors can't tell the difference.",
+    desc: "Not a synonym swapper. A voice matcher. Your essay reads like you wrote it — because it basically is you, just polished.",
     bg: "bg-purple-500/10",
   },
   {
-    icon: "✅",
-    title: "Pass Every Check",
-    desc: "Turnitin, GPTZero, Originality.ai, Copyleaks, Sapling — if your school uses it, we beat it. Guaranteed.",
-    bg: "bg-emerald-500/10",
-  },
-  {
-    icon: "📝",
-    title: "Keep Your Style",
-    desc: "Adjust tone, formality, and perspective. Your essay sounds like you wrote it — because it basically is you, just enhanced.",
+    icon: "⚡",
+    title: "Daily Pass Available",
+    desc: "Deadline in an hour? Get Pro-level access for 24 hours. No subscription, no commitment. Just $5.99.",
     bg: "bg-amber-500/10",
   },
 ];
@@ -97,12 +97,18 @@ const DETECTORS = [
 
 // ─── Scroll Logo Ticker ────────────────────────────────────
 function LogoTicker() {
-  const tripled = [...UNIVERSITIES, ...UNIVERSITIES, ...UNIVERSITIES];
+  // 3 copies + CSS translateX(-33.333%) = seamless infinite loop
+  const copies = [...UNIVERSITIES, ...UNIVERSITIES, ...UNIVERSITIES];
 
   return (
     <div className="overflow-hidden relative">
-      <div className="flex items-center gap-16 animate-scroll-left" style={{ animationDuration: "35s" }}>
-        {tripled.map((u, i) => (
+      <div
+        className="flex items-center gap-16"
+        style={{
+          animation: "scroll-left 35s linear infinite",
+        }}
+      >
+        {copies.map((u, i) => (
           <div key={i} className="shrink-0 h-10 w-28 relative opacity-40 hover:opacity-70 transition-opacity">
             <Image
               src={u.logo}
@@ -166,13 +172,13 @@ export default function Marketing() {
               Built for Students
             </p>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-4">
-              Your Secret Weapon for{" "}
+              Your professor uses AI detectors.{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-                AI-Proof Essays
+                Now you can too.
               </span>
             </h2>
             <p className="text-slate-400 text-sm max-w-xl mx-auto leading-relaxed">
-              Schools use AI detectors. We make sure you pass them — while keeping your writing authentic and your grades safe.
+              Don&apos;t submit blind. See exactly what gets flagged, fix it before they see it, and walk into class knowing you&apos;re safe.
             </p>
           </div>
         </ScrollReveal>
@@ -195,8 +201,8 @@ export default function Marketing() {
           <div className="mt-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Beats</p>
-                <p className="text-sm text-white font-semibold">Every School&apos;s AI Detector</p>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">99.2% pass rate against</p>
+                <p className="text-sm text-white font-semibold">Every Major AI Detector</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {DETECTORS.map((d, i) => (
@@ -254,14 +260,17 @@ export default function Marketing() {
                 Swear By Us
               </span>
             </h2>
-            <p className="text-sm text-slate-400">Real students. Real results. No more AI flags.</p>
+            <p className="text-sm text-slate-400">Real students. Real results. Not a single AI flag.</p>
           </div>
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
-          {/* Row 1 — scrolls left */}
+          {/* Row 1 — scrolls left, infinite loop */}
           <div className="overflow-hidden relative">
-            <div className="flex gap-5 animate-scroll-left" style={{ animationDuration: "40s" }}>
+            <div
+              className="flex gap-5"
+              style={{ animation: "scroll-left 40s linear infinite" }}
+            >
               {[...TESTIMONIALS_ROW1, ...TESTIMONIALS_ROW1, ...TESTIMONIALS_ROW1].map((r, i) => (
                 <ReviewCard key={`r1-${i}`} r={r} />
               ))}
@@ -272,9 +281,12 @@ export default function Marketing() {
         </ScrollReveal>
 
         <ScrollReveal delay={200}>
-          {/* Row 2 — scrolls right */}
+          {/* Row 2 — scrolls right, infinite loop */}
           <div className="mt-6 overflow-hidden relative">
-            <div className="flex gap-5 animate-scroll-right" style={{ animationDuration: "35s" }}>
+            <div
+              className="flex gap-5"
+              style={{ animation: "scroll-right 35s linear infinite" }}
+            >
               {[...TESTIMONIALS_ROW2, ...TESTIMONIALS_ROW2, ...TESTIMONIALS_ROW2].map((r, i) => (
                 <ReviewCard key={`r2-${i}`} r={r} />
               ))}

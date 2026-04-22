@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Humanize AI — Free AI Text Humanizer | Make AI Sound Human",
+  title: "EIGEN AI — Free AI Text Humanizer | Make AI Sound Human",
   description:
-    "Humanize AI text instantly. Transform ChatGPT, Claude, and Gemini output into natural, undetectable human writing. Free AI humanizer with sentence-level detection scoring.",
+    "Humanize AI text instantly. Turn ChatGPT, Claude & Gemini output into natural, undetectable human writing. Free, sentence-level scoring.",
   keywords: [
     "humanize ai",
     "ai humanizer",
@@ -18,18 +18,18 @@ export const metadata: Metadata = {
     "free ai humanizer",
   ],
   openGraph: {
-    title: "Humanize AI — Free AI Text Humanizer",
+    title: "EIGEN AI — Free AI Text Humanizer",
     description:
       "Transform AI-generated text into natural, human-sounding writing. Free tool with detection scoring.",
-    url: "https://text-humanizer-theta.vercel.app/humanize-ai",
+    url: "https://eigentexthumanizer.com/humanize-ai",
     type: "article",
   },
   alternates: {
-    canonical: "https://text-humanizer-theta.vercel.app/humanize-ai",
+    canonical: "https://eigentexthumanizer.com/humanize-ai",
   },
 };
 
-export default function HumanizeAIPage() {
+export default function HumanizeAiPage() {
   return (
     <main className="min-h-screen bg-[#0a0a0f] text-white">
       {/* Hero */}
@@ -110,9 +110,9 @@ export default function HumanizeAIPage() {
         <div className="space-y-4">
           {[
             { q: "What does it mean to humanize AI text?", a: "Humanizing AI text means rewriting machine-generated content so it reads like a real person wrote it. This involves varying sentence structure, adding natural language patterns, removing robotic markers, and creating a conversational flow." },
-            { q: "Is humanizing AI text free?", a: "Yes! HumanizeAI offers 3 free humanizations per day. For unlimited access, upgrade to our Basic ($9.99/mo), Pro ($19.99/mo), or Max ($39.99/mo) plan." },
+            { q: "Is humanizing AI text free?", a: "Yes! EIGEN offers 3 free humanizations per day. For unlimited access, upgrade to our Basic ($9.99/mo), Pro ($19.99/mo), or Max ($39.99/mo) plan." },
             { q: "Can humanized text bypass Turnitin?", a: "Our tool restructures AI text to sound naturally human by varying patterns and removing detectable markers. We recommend using our built-in AI detector to verify results before submitting." },
-            { q: "What AI tools does this work with?", a: "HumanizeAI works with text from any AI writing tool — ChatGPT, Claude, Gemini, GPT-4, Llama, Mistral, and more. Simply paste the AI-generated text and click Humanize." },
+            { q: "What AI tools does this work with?", a: "EIGEN AI works with text from any AI writing tool — ChatGPT, Claude, Gemini, GPT-4, Llama, Mistral, and more. Simply paste the AI-generated text and click Humanize." },
             { q: "Does it preserve the original meaning?", a: "Yes. Our humanization process keeps all key information, facts, and arguments intact while only changing the writing style to sound more natural and human." },
           ].map((faq) => (
             <details key={faq.q} className="group bg-white/[0.02] border border-white/5 rounded-xl">
@@ -147,7 +147,7 @@ export default function HumanizeAIPage() {
             "@type": "HowTo",
             name: "How to Humanize AI Text",
             step: [
-              { "@type": "HowToStep", name: "Paste AI Text", text: "Copy text from ChatGPT, Claude, or any AI tool and paste it into HumanizeAI." },
+              { "@type": "HowToStep", name: "Paste AI Text", text: "Copy text from ChatGPT, Claude, or any AI tool and paste it into EIGEN AI AI." },
               { "@type": "HowToStep", name: "Click Humanize", text: "Our AI rewrites the text with natural language patterns." },
               { "@type": "HowToStep", name: "Verify & Submit", text: "Use the built-in AI detector to confirm the text passes as human-written." },
             ],
@@ -162,7 +162,7 @@ export default function HumanizeAIPage() {
             "@type": "FAQPage",
             mainEntity: [
               { "@type": "Question", name: "What does it mean to humanize AI text?", acceptedAnswer: { "@type": "Answer", text: "Humanizing AI text means rewriting machine-generated content so it reads like a real person wrote it." } },
-              { "@type": "Question", name: "Is humanizing AI text free?", acceptedAnswer: { "@type": "Answer", text: "Yes! HumanizeAI offers 3 free humanizations per day with no credit card required." } },
+              { "@type": "Question", name: "Is humanizing AI text free?", acceptedAnswer: { "@type": "Answer", text: "Yes! EIGEN offers 3 free humanizations per day with no credit card required." } },
               { "@type": "Question", name: "Can humanized text bypass Turnitin?", acceptedAnswer: { "@type": "Answer", text: "Our tool restructures AI text to sound naturally human. Use the built-in detector to verify results." } },
             ],
           }),
@@ -170,7 +170,7 @@ export default function HumanizeAIPage() {
       />
 
       <footer className="border-t border-white/5 py-6 text-center text-[10px] text-slate-600">
-        © 2026 HumanizeAI — Making AI text sound human.
+        © 2026 EIGEN AI — Making AI text sound human.
       </footer>
     </main>
   );

@@ -1,0 +1,91 @@
+# EIGEN AI — Full Context for AI Crawlers
+
+> This is the extended llms-full.txt for EIGEN AI (https://eigentexthumanizer.com). It is intended for LLM-based retrieval systems (ChatGPT Search, Perplexity, Claude, Gemini, You.com) that support deep context ingestion.
+
+## About EIGEN AI
+
+EIGEN AI is a web application for detecting AI-generated text and rewriting it into natural, human-sounding writing. It is built for students, content creators, marketers, and professionals who use AI writing tools (ChatGPT, Claude, Gemini, Copilot) and need their final output to read as authentically human and to pass institutional AI checkers.
+
+The app combines two capabilities in one interface:
+
+1. **AI Detector** — an in-house classifier that analyses text at the sentence level and color-codes the likelihood that each sentence is AI-generated.
+2. **Text Humanizer** — a rewriting engine that targets the flagged sentences (not the whole document) and rewrites them to sound human while preserving meaning, citations, and factual claims.
+
+## Why sentence-level detection matters
+
+Most detectors give a single document-level score ("87% AI"). That is almost useless for editing — the user does not know which sentences to rewrite. EIGEN AI produces a per-sentence probability and highlights each sentence in green, yellow, or red. Users can then rewrite only the problematic sentences instead of regenerating the entire document, which preserves their own voice and saves credits.
+
+## Product surfaces
+
+### /humanize-ai — Core humanizer
+Paste any AI-generated draft. The app will segment it, score each sentence, and rewrite flagged sentences. Users can choose tone (academic, professional, casual, conversational) and perspective (first-person, third-person). Accepts up to 30,000 characters on the Max plan.
+
+### /ai-detector — Standalone detector
+For users who want to QA writing they did not generate (e.g. a teacher reviewing student work, or a freelancer vetting incoming copy). Returns sentence-level scores with color-coded highlights and a document-level confidence band.
+
+### /chatgpt-humanizer and /chatgpt-detector
+Variants of the humanizer and detector tuned for the stylistic fingerprints of GPT-3.5, GPT-4, and GPT-4o output: em-dash overuse, "delve / tapestry / underscore" vocabulary, parallel-structure fatigue, tri-colon lists, and other common ChatGPT tells.
+
+### /bypass-turnitin-ai and /bypass-ai-detection
+Marketing landing pages optimised for students searching for detector-bypass tools. Functionally the same product; positioned against specific detector brands (Turnitin, GPTZero, Copyleaks, Originality.ai).
+
+### /free-text-humanizer
+Entry-point for the free tier. No sign-up required for the first 3 scans + 3 humanizations per day.
+
+### /ai-to-human-text
+Landing page for users querying "convert AI to human text". Functionally identical to /humanize-ai.
+
+### /pricing
+Plan comparison. See the Pricing section below.
+
+## Pricing (all prices AUD)
+
+| Plan | Price | Scans/day | Humanizations/day | Rewrites/day | Chars per input |
+|------|-------|-----------|-------------------|--------------|-----------------|
+| Free | $0 | 3 | 3 | 3 | 1,000 |
+| Basic | $9.99/mo | 10 | 30 | 30 | 8,000 |
+| Pro | $19.99/mo | 50 | 100 | 100 | 15,000 |
+| Max | $39.99/mo | 300 | Unlimited | Unlimited | 30,000 |
+| Daily Pass | $5.99 one-off | — | Pro-equivalent for 24h | Pro-equivalent | 15,000 |
+
+No credit card required for the Free plan. Payments processed by Stripe.
+
+## Technical details
+
+- Frontend: Next.js App Router
+- Detector: proprietary classifier trained on mixed human / AI corpora
+- Humanizer: proprietary rewriting pipeline; preserves citations, code blocks, and quoted material
+- File support: .pdf, .docx, .txt (upload on Basic and above)
+- Data retention: text is processed in-memory and discarded after the response is returned. Text is not used to train models and is not shared with third parties beyond the inference provider.
+
+## Use cases
+
+- University students rewriting AI-scaffolded drafts before submission
+- ESL writers using AI to generate a first draft, then humanizing it into their own voice
+- Content marketers bulk-humanizing AI-generated blog copy for SEO
+- Freelance writers QAing client deliverables before handoff
+- Teachers and editors checking submissions for AI involvement
+
+## Positioning vs. competitors
+
+- vs. Undetectable.ai / StealthGPT / HIX Bypass: EIGEN AI shows sentence-level scores so users can target edits instead of regenerating whole documents.
+- vs. GPTZero / ZeroGPT (detectors only): EIGEN AI bundles detection and humanization in one workflow, with file upload.
+- vs. Quillbot: Quillbot is a paraphraser; EIGEN AI is purpose-built to defeat AI detection with verification rescans.
+
+## Brand
+
+- Name: EIGEN AI
+- Tagline: "Detect. Humanize. Verify."
+- Audience voice: direct, student-friendly, no corporate jargon
+- Brand colors: deep navy background (#0a0a0f), emerald accent
+- Domain: eigentexthumanizer.com
+
+## Content policy
+
+EIGEN AI exists to help users polish AI-assisted drafts into authentic, human-sounding writing. The product is explicitly designed for users who draft with AI assistance and want to take ownership of the final text. Users remain responsible for complying with their own institution's or employer's AI-use policies. EIGEN AI does not generate content from prompts — it only rewrites text the user already has.
+
+## Contact
+
+- Owner: Rey (CEO / CMO / product owner)
+- Email: caiyingzhengrey@gmail.com
+- Feedback channel: the in-app thumbs-up/down on every humanization

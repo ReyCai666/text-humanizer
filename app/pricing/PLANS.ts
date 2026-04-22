@@ -18,7 +18,7 @@ const PLANS: {
       "3 AI scans per day",
       "3 humanizations per day",
       "3 rewrites per day",
-      "Up to 3,000 characters per input",
+      "Up to 1,000 characters per input",
       "Basic AI detection",
     ],
     vid: null,
@@ -39,7 +39,7 @@ const PLANS: {
       "Sentence-level AI highlights",
       "Tone & perspective controls",
     ],
-    vid: "1524022",
+    vid: "1553040",
     popular: false,
   },
   {
@@ -58,7 +58,7 @@ const PLANS: {
       "One-click sentence rewrite",
       "Tone & perspective controls",
     ],
-    vid: "1524636",
+    vid: "1553066",
     popular: true,
   },
   {
@@ -79,8 +79,55 @@ const PLANS: {
       "Priority processing (2× faster)",
       "Early access to new features",
     ],
-    vid: "1524640",
+    vid: "1553067",
     popular: false,
+  },
+];
+
+export const DAILY_PASSES: {
+  name: string;
+  price: string;
+  duration: string;
+  description: string;
+  features: string[];
+  vid: string;
+  popular: boolean;
+}[] = [
+  {
+    name: "1-Day Pass",
+    price: "5.99",
+    duration: "24 hours",
+    description: "Full Pro access, no commitment",
+    features: [
+      "50 AI scans",
+      "100 humanizations",
+      "100 rewrites",
+      "Up to 15,000 characters per input",
+      "File upload (PDF, DOCX, TXT)",
+      "Sentence-level AI highlights",
+      "One-click sentence rewrite",
+      "Tone & perspective controls",
+    ],
+    vid: "1553092",
+    popular: false,
+  },
+  {
+    name: "3-Day Pass",
+    price: "12.99",
+    duration: "72 hours",
+    description: "Best value for short projects",
+    features: [
+      "50 AI scans / day",
+      "100 humanizations / day",
+      "100 rewrites / day",
+      "Up to 15,000 characters per input",
+      "File upload (PDF, DOCX, TXT)",
+      "Sentence-level AI highlights",
+      "One-click sentence rewrite",
+      "Tone & perspective controls",
+    ],
+    vid: "1553096",
+    popular: true,
   },
 ];
 
