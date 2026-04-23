@@ -270,50 +270,13 @@ export default function RootLayout({
             }),
           }}
         />
-        {/* FAQ Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "FAQPage",
-              mainEntity: [
-                {
-                  "@type": "Question",
-                  name: "What is EIGEN AI?",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "EIGEN AI is a tool that transforms AI-generated text into natural, human-sounding writing. It also includes an AI detection feature that analyzes text sentence-by-sentence and shows you exactly how likely each part is to be flagged as AI.",
-                  },
-                },
-                {
-                  "@type": "Question",
-                  name: "Can EIGEN AI bypass Turnitin and GPTZero?",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "EIGEN AI rewrites AI text to sound naturally human by varying sentence structure, adding natural language patterns, and removing robotic markers. You can verify results using the built-in AI detector before submitting.",
-                  },
-                },
-                {
-                  "@type": "Question",
-                  name: "Is there a free version?",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "Yes! The free plan includes 3 humanizations and 3 AI scans per day, with up to 1,000 characters per input. No credit card required.",
-                  },
-                },
-                {
-                  "@type": "Question",
-                  name: "Does it support file uploads?",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "Yes! You can upload Word documents (.docx), PDF files, and plain text files (.txt) for both humanization and AI detection analysis.",
-                  },
-                },
-              ],
-            }),
-          }}
-        />
+        {/*
+          Note: FAQPage JSON-LD must be defined per-page (Schema.org/Google
+          require exactly one FAQPage entity per document). Subpages like
+          /humanize-ai and /chatgpt-detector inject their own FAQPage in
+          their own page.tsx. Do not re-introduce a site-wide FAQPage here
+          or Search Console will report "Duplicate field 'FAQPage'".
+        */}
       </head>
       <body className="bg-[#0a0a0f] text-white antialiased">{children}</body>
     </html>
