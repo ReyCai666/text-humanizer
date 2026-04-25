@@ -713,7 +713,16 @@ function HomeContent() {
                 <div className="relative bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 focus-within:border-amber-500/30 focus-within:shadow-[0_0_30px_rgba(245,158,11,0.05)]">
                   <textarea
                     value={dInput}
-                    onChange={(e) => setDInput(e.target.value)}
+                    onChange={(e) => {
+                      setDInput(e.target.value);
+                      // Drift fix: when the user edits the textarea after upload,
+                      // clear the cached contentBlocks so the result panel renders
+                      // from the *current* dInput rather than the original upload.
+                      // Without this, trimming a 20k-char file down to 1k would
+                      // still display the original 20k in the Original Document
+                      // pane after scanning.
+                      if (contentBlocks) setContentBlocks(null);
+                    }}
                     placeholder="Paste your text here to check for AI content..."
                     className="w-full h-64 sm:h-80 bg-transparent p-5 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none"
                   />
